@@ -176,8 +176,8 @@ function startCup(){CUP={r:0,pts:Array(NC).fill(0),wins:Array(NC).fill(0),gain:A
 function cupOrder(){return [...Array(NC).keys()].sort((a,b)=>CUP.pts[b]-CUP.pts[a]||CUP.wins[b]-CUP.wins[a]||CUP.race.indexOf(a)-CUP.race.indexOf(b))}
 function cupQuit(){CUP=null;M.cup=0;M.s='mode';startDemo(M.t)}
 function cupNext(){if(CUP.pg==0)CUP.pg=1;else if(CUP.done)cupQuit();else{CUP.r++;CUP.pg=0;startRace()}}
-const carOf=id=>{const hi=id-(NC-M.pl);return hi>=0?CARS[M.pk[hi]]:CARS[(id+1)%4]};
-const nameOf=id=>{const hi=id-(NC-M.pl);return(hi>=0?(hi==0&&USER?USER.id.toUpperCase():'JUGADOR '+(hi+1)):'CPU')+' - '+carOf(id).n};
+const carOf=id=>{if(CUP&&CUP.onl)return CARS[CUP.onl.cars[id]];const hi=id-(NC-M.pl);return hi>=0?CARS[M.pk[hi]]:CARS[(id+1)%4]};
+const nameOf=id=>{if(CUP&&CUP.onl){const I=CUP.onl;return(I.hum[id]?I.names[id].toUpperCase():'CPU')+' - '+carOf(id).n}const hi=id-(NC-M.pl);return(hi>=0?(hi==0&&USER?USER.id.toUpperCase():'JUGADOR '+(hi+1)):'CPU')+' - '+carOf(id).n};
 function trophy(x,y,k){X.save();X.translate(x,y);X.scale(k,k);X.fillStyle='#ffd23a';X.strokeStyle='#ffd23a';X.lineWidth=2;
  X.beginPath();X.moveTo(-8,-10);X.lineTo(8,-10);X.lineTo(6,2);X.quadraticCurveTo(0,8,-6,2);X.closePath();X.fill();
  X.beginPath();X.arc(-9,-6,4,Math.PI*.5,Math.PI*1.5);X.stroke();X.beginPath();X.arc(9,-6,4,-Math.PI*.5,Math.PI*.5);X.stroke();
@@ -205,9 +205,9 @@ function cupRes(){const pg=CUP.pg,fin=CUP.done&&pg==1,ord=pg?cupOrder():CUP.race
  else if(pg){tx('CLASIFICACIÓN',128,22,'#ffd23a',14,'c');tx('TRAS '+n+' DE '+TR.length+' CARRERAS',128,36,'#7df',7,'c')}
  else{tx('CARRERA '+n+'/'+TR.length,128,22,'#ffd23a',14,'c');tx(TR[CUP.r].n+' · '+DFN[M.df],128,36,'#7df',7,'c')}
  if(fin)podium(ord);
- else ord.forEach((id,i)=>{const y=50+i*14,h=id>=NC-M.pl,c=carOf(id),col=h?'#7df':'#fff';X.fillStyle=c.c;X.fillRect(20,y-9,14,9);
+ else ord.forEach((id,i)=>{const y=50+i*14,h=CUP.onl?CUP.onl.hum[id]:id>=NC-M.pl,c=carOf(id),col=h?'#7df':'#fff';X.fillStyle=c.c;X.fillRect(20,y-9,14,9);
   tx((i+1)+'. '+nameOf(id),40,y,col,8);tx(pg?CUP.pts[id]+' PTS':'+'+CUP.gain[id],236,y,pg?col:'#ffd23a',8,'r')});
- if(pg==0)btn('CLASIFICACIÓN',58,190,140,22,()=>{CUP.pg=1},1);else if(CUP.done)btn('MENÚ',88,190,80,22,cupQuit,1);else btn('SIGUIENTE CARRERA',48,190,160,22,cupNext,1);
+ if(CUP.onl&&!CUP.done)tx(ON&&ON.nextAt!=null?'SIGUIENTE CARRERA EN '+Math.max(0,Math.ceil((ON.nextAt-ON.f.srv())/1000))+'s':'ESPERANDO A LOS DEMÁS JUGADORES...',128,200,'#ffd23a',9,'c');else if(pg==0)btn('CLASIFICACIÓN',58,190,140,22,()=>{CUP.pg=1},1);else if(CUP.done)btn('MENÚ',88,190,80,22,cupQuit,1);else btn('SIGUIENTE CARRERA',48,190,160,22,cupNext,1);
  tx('ENTER: continuar · ESC: salir de la copa',128,221,'#888',6,'c')}
 function menu(){if(!USER)return;
  const d=(hit('ArrowRight','KeyD')?1:0)-(hit('ArrowLeft','KeyA')?1:0),ud=(hit('ArrowDown','KeyS')?1:0)-(hit('ArrowUp','KeyW')?1:0),en=hit('Enter','Space'),es=hit('Escape'),s=M.s;
@@ -221,9 +221,9 @@ function posAnn(dt){if(G.cd>0)return;for(const c of G.cars){if(c.hu==null)contin
 function step(dt){T+=dt;
  if(G.st=='menu'){menu();if(G.st=='menu'){G.cars.forEach(c=>upd(c,dt));rank()}}
  else if(G.st=='race'){if(G.cd>0){G.cd-=dt;if(G.cd<=0)sfx('launch')}else{G.t+=dt;G.cars.forEach(c=>upd(c,dt));
-   if(G.cars.filter(c=>c.hu!=null).every(c=>c.fin)){G.e+=dt;if(G.e>3)endRace()}}
+   {const on=ON&&ON.live,hs=G.cars.filter(c=>c.hu!=null||(on&&c.rm));if(on&&G.cars.some(c=>c.hu!=null&&c.fin))G.w+=dt;if(hs.every(c=>c.fin)){G.e+=dt;if(G.e>3)endRace()}else if(on&&G.w>25)endRace()}}
   rank();posAnn(dt);if(hit('Escape')){if(CUP){cupQuit()}else{M.s='mode';startDemo(M.t)}}}
- else{G.cars.forEach(c=>upd(c,dt));rank();if(CUP){if(hit('Enter','Space'))cupNext();else if(hit('Escape'))cupQuit()}else if(hit('Enter','Escape','Space')){M.s='mode';startDemo(M.t)}}
+ else{G.cars.forEach(c=>upd(c,dt));rank();if(CUP){if(CUP.onl){onlCupTick();if(hit('Enter','Space')){if(CUP.pg==0)CUP.pg=1;else if(CUP.done)cupQuit()}else if(hit('Escape'))cupQuit()}else if(hit('Enter','Space'))cupNext();else if(hit('Escape'))cupQuit()}else if(hit('Enter','Escape','Space')){M.s='mode';startDemo(M.t)}}
  if(ON&&ON.live)onlSend(dt);for(const k in P)delete P[k]}
 // ---------- DIBUJO ----------
 function tx(s,x,y,col='#fff',sz=8,al='l'){X.font='bold '+sz+'px monospace';X.textAlign=al=='c'?'center':al=='r'?'right':'left';X.fillStyle='#000';X.fillText(s,x+1,y+1);X.fillStyle=col;X.fillText(s,x,y)}
@@ -708,44 +708,70 @@ function render(){BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
    btn('MENÚ',88,198,80,20,()=>{M.s='mode';startDemo(M.t)},1);X.restore()}}}
  bgm.volume=G.st=='race'?.35:.6;if(osc){const p=G.st=='race'?G.cars.find(c=>c.hu==0):null;if(p&&!mute){osc.frequency.value=40+p.sp/p.max*150;gn.gain.value=.012}else gn.gain.value=0}}
 // ================= MULTIJUGADOR ONLINE (Firebase Realtime Database) =================
-const ONL_WAIT=20,ONL_LAPS=3;   // segundos de búsqueda de sala · vueltas de la carrera online
+const ONL_WAIT=20,ONL_LAPS=3,ONL_VOTE=15,ONL_NEXT=14,ONL_STAND=7;   // segundos de búsqueda de sala · vueltas de la carrera online
 let ON=null;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function onlEnter(){M.on=1;M.pl=1;M.cup=0;M.s='c0'}
 async function onlStart(){M.s='onl';const f=await fbApi();
  const o=ON={f,pid:USER.id.toLowerCase()+'_'+Math.random().toString(36).slice(2,6),name:USER.id,car:M.pk[0],joined:0,err:'',go:0,live:0,net:{},lob:null};
  if(!f||!f.online){o.err='Servidor online no disponible';return}
- for(let i=0;i<45&&ON===o&&!o.joined;i++){
-  try{const r=await f.join({pid:o.pid,name:o.name,car:o.car},{track:Math.random()*TR.length|0,laps:ONL_LAPS,wait:ONL_WAIT*1000});
+ for(let i=0;i<70&&ON===o&&!o.joined;i++){
+  try{const r=await f.join({pid:o.pid,name:o.name,car:o.car},{laps:ONL_LAPS,wait:ONL_WAIT*1000});
    if(ON!==o){if(r)f.stop(r.rid,o.pid,'lobby');return}
-   if(r){Object.assign(o,{rid:r.rid,startAt:r.startAt,track:r.track,laps:r.laps,lob:r,joined:1,err:''});o.unl=f.watchLobby(v=>{if(v&&v.rid==o.rid)o.lob=v});break}}
+   if(r){Object.assign(o,{rid:r.rid,laps:r.laps,lob:r,joined:1,err:''});o.unl=f.watchLobby(v=>{if(v&&v.rid==o.rid)o.lob=v});break}}
   catch(e){o.err='Error: '+((e&&(e.code||e.message))||'conexión')}
   await sleep(1000)}
  if(ON===o&&!o.joined&&!o.err)o.err='No se encontró sala. Inténtalo de nuevo.'}
 function onlStop(){const o=ON;if(!o)return;ON=null;M.on=0;try{o.unl&&o.unl();o.unw&&o.unw()}catch(e){}
- if(o.joined&&o.f)o.f.stop(o.rid,o.pid,o.live?'race':'lobby').catch(()=>{})}
+ if(o.joined&&o.f)o.f.stop(o.live?o.key:o.rid,o.pid,o.live?'race':'lobby').catch(()=>{})}
 function onlCancel(){onlStop();M.s='mode'}
-function onlTick(){const o=ON;if(!o||!o.joined||o.go)return;if(o.f.srv()>=o.startAt){o.go=1;startOnline(o)}}
-function startOnline(o){const lob=o.lob&&o.lob.rid==o.rid?o.lob:null;
- let pl=Object.entries(lob&&lob.players||{}).map(([pid,v])=>({pid,name:v.n,car:v.c|0,t:v.t||0}));
+function onlTick(){const o=ON;if(!o||!o.joined||o.go)return;const lob=o.lob&&o.lob.rid==o.rid?o.lob:null;if(!lob||lob.startAt==null)return;
+ const now=o.f.srv();
+ if(lob.dec&&lob.dec.ok){o.dec=lob.dec;if(now>=lob.dec.goAt){o.go=1;startOnline(o)}return}
+ if(now<lob.startAt)return;                       // fase 1: búsqueda de jugadores (20 s)
+ // fase 2: votación. Todos los conectados deciden si juegan solo con los presentes
+ if(!(lob.votes&&lob.votes[o.pid]!=null)){if(hit('Enter'))onlVote(1);else if(hit('Backspace'))onlVote(0)}
+ if(now-(o.dt||0)>900&&!o.dbusy){o.dt=now;o.dbusy=1;o.f.decide(o.rid,ONL_VOTE*1000,NC,ONL_WAIT*1000).catch(()=>{}).then(()=>{o.dbusy=0})}}
+function onlVote(v){const o=ON;if(!o||!o.joined||o.go)return;o.f.vote(o.rid,o.pid,v).catch(()=>{})}
+// Arranca la COPA online: la lista de jugadores queda fija para todas las carreras
+function startOnline(o){const dec=o.dec||{};
+ let pl=Object.entries(dec.pl||{}).map(([pid,v])=>({pid,name:v.n,car:v.c|0,t:v.t||0}));
  if(!pl.some(p=>p.pid==o.pid))pl.push({pid:o.pid,name:o.name,car:o.car,t:Date.now()});
  pl.sort((a,b)=>a.t-b.t||(a.pid<b.pid?-1:1));
  if(pl.length>NC){const me=pl.find(p=>p.pid==o.pid);pl=pl.slice(0,NC);if(!pl.includes(me))pl[NC-1]=me}
  try{o.f.cancelDisc()}catch(e){}
- sfx('ign');try{plNext()}catch(e){}CUP=null;M.cup=0;M.pl=1;M.t=o.track;setTrack(M.t);
- const n=pl.length,cs=[];
- for(let s=0;s<NC;s++){const hi=s-(NC-n);let c;
-  if(hi>=0){const p=pl[hi],me=p.pid==o.pid;c=mkCar(CARS[p.car%4],me?0:null,s,M.df);c.nm=p.name;if(!me){c.rm=1;c.uid=p.pid}}
-  else c=mkCar(CARS[(s+1)%4],null,s,M.df);
+ const n=pl.length,I={names:[],cars:[],hum:[],pid:[],me:0};
+ for(let s=0;s<NC;s++){const hi=s-(NC-n);
+  if(hi>=0){const p=pl[hi];I.names[s]=p.name;I.cars[s]=p.car%4;I.hum[s]=1;I.pid[s]=p.pid;if(p.pid==o.pid)I.me=s}
+  else{I.names[s]='CPU';I.cars[s]=(s+1)%4;I.hum[s]=0;I.pid[s]=null}}
+ CUP={r:0,pts:Array(NC).fill(0),wins:Array(NC).fill(0),gain:Array(NC).fill(0),grid:null,race:[...Array(NC).keys()],pg:0,done:false,onl:I};
+ M.cup=1;M.pl=1;o.key=null;onlRace(o,dec.goAt||o.f.srv())}
+// Prepara y lanza una carrera de la copa (T = instante de servidor en que todos arrancan)
+function onlRace(o,T){sfx('ign');try{plNext()}catch(e){}
+ const I=CUP.onl,gr=CUP.grid||[...Array(NC).keys()];M.t=CUP.r;setTrack(M.t);
+ if(o.key){try{o.unw&&o.unw()}catch(e){}o.f.stop(o.key,o.pid,'race').catch(()=>{})}
+ const cs=[];
+ for(let s=0;s<NC;s++){let c;
+  if(I.hum[s]){const me=s==I.me;c=mkCar(CARS[I.cars[s]],me?0:null,gr[s],M.df);c.nm=I.names[s];if(!me){c.rm=1;c.uid=I.pid[s]}}
+  else c=mkCar(CARS[I.cars[s]],null,gr[s],M.df);
   c.id=s;cs.push(c)}
- const late=Math.max(0,(o.f.srv()-o.startAt)/1000);
- G={st:'race',cars:cs,cd:Math.max(.5,3.5-late),t:0,laps:o.laps,fc:0,e:0};rank();
- o.goAt=performance.now()/1000+G.cd;o.live=1;o.sa=0;
- o.unw=o.f.watchRace(o.rid,(pid,v)=>{if(ON===o&&pid!=o.pid&&v)o.net[pid]=Object.assign({},v,{rt:performance.now()/1000})});
- o.f.armSt(o.rid,o.pid)}
+ const late=Math.max(0,(o.f.srv()-T)/1000);
+ G={st:'race',cars:cs,cd:Math.max(.5,3.5-late),t:0,laps:o.laps,fc:0,e:0,w:0};rank();
+ o.key=o.rid+'/r'+CUP.r;o.net={};o.goAt=performance.now()/1000+G.cd;o.live=1;o.sa=0;o.nextAt=null;o.nreq=0;o.endT=null;
+ o.unw=o.f.watchRace(o.key,(pid,v)=>{if(ON===o&&pid!=o.pid&&v)o.net[pid]=Object.assign({},v,{rt:performance.now()/1000})});
+ o.f.armSt(o.key,o.pid)}
+// Entre carreras: todos acuerdan (hora de servidor) cuándo empieza la siguiente
+function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
+ if(o.endT==null)o.endT=o.f.srv();
+ if(CUP.done){if(CUP.pg==0&&o.f.srv()-o.endT>6000)CUP.pg=1;return}
+ if(o.nextAt==null&&!o.nreq){o.nreq=1;const r=CUP.r+1;
+  o.f.nextAt(o.rid,r,ONL_NEXT*1000).then(v=>{if(ON===o&&CUP&&CUP.r+1==r)o.nextAt=v||o.f.srv()+ONL_NEXT*1000}).catch(()=>{if(ON===o)o.nextAt=o.f.srv()+ONL_NEXT*1000})}
+ if(o.nextAt!=null){const left=o.nextAt-o.f.srv();
+  if(CUP.pg==0&&left<ONL_STAND*1000)CUP.pg=1;
+  if(left<=0){const T=o.nextAt;CUP.r++;CUP.pg=0;onlRace(o,T)}}}
 function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.1)return;o.sa=0;
  const c=G.cars.find(c=>c.hu==0);if(!c)return;
- o.f.send(o.rid,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),t:o.f.srv()})}
+ o.f.send(o.key,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),t:o.f.srv()})}
 // coche de otro jugador: sigue sus datos de red; si deja de enviar durante 5 s pasa a ser un bot
 function rmUpd(c,dt){const o=ON,now=performance.now()/1000,n=o&&o.net[c.uid],last=n?n.rt:(o?o.goAt:0);
  if(!o||now-last>5){c.rm=0;c.nm=(c.nm||'CPU')+' (BOT)';return upd(c,dt)}
@@ -754,15 +780,30 @@ function rmUpd(c,dt){const o=ON,now=performance.now()/1000,n=o&&o.net[c.uid],las
  let D=(c.lap-1)*L+c.z+c.sp*dt;const e=Dt-D;D+=Math.abs(e)>L*.4?e:e*Math.min(1,dt*8);
  c.lap=Math.floor(D/L)+1;c.z=D-(c.lap-1)*L;c.sp=n.sp;c.x+=(n.x-c.x)*Math.min(1,dt*10);c.sl=n.sl;c.br=n.br?1:0;c.nt=n.nt?1:0;
  if(n.fin&&!c.fin)c.fin=++G.fc}
-function onlUI(){const o=ON;tx('MULTIJUGADOR ONLINE',128,28,'#ffd23a',14,'c');
+function onlUI(){const o=ON;tx('MULTIJUGADOR ONLINE',128,28,'#ffd23a',14,'c');tx('COPA COMPLETA · '+TR.length+' CARRERAS',128,40,'#7df',7,'c');
  if(!o||!o.joined){tx(o&&o.err?o.err:'CONECTANDO CON EL SERVIDOR...',128,100,o&&o.err?'#ff7a7a':'#fff',o&&o.err&&o.err.length>34?6:8,'c');btn(o&&o.err?'VOLVER':'CANCELAR',88,190,80,20,onlCancel,1);return}
- const left=Math.max(0,(o.startAt-o.f.srv())/1000),pl=Object.values(o.lob&&o.lob.players||{}).sort((a,b)=>(a.t||0)-(b.t||0));
- tx(o.go?'¡INICIANDO CARRERA!':'BUSCANDO PARTIDA...',128,50,'#fff',9,'c');
- tx(''+Math.ceil(left),128,92,'#ffd23a',30,'c');
- X.fillStyle='#222';X.fillRect(48,100,160,6);X.fillStyle='#c8102e';X.fillRect(48,100,160*Math.min(1,Math.max(0,1-left/ONL_WAIT)),6);
- tx('JUGADORES: '+pl.length+'/'+NC,128,122,'#7df',9,'c');
- pl.slice(0,NC).forEach((v,i)=>tx((i+1)+'. '+v.n+(v.n==o.name&&o.lob&&o.lob.players[o.pid]==v?' (TÚ)':''),i<5?40:136,136+(i%5)*9,'#fff',7));
- tx('Los puestos libres los ocupan bots',128,188,'#aaa',7,'c');btn('CANCELAR',88,196,80,18,onlCancel,1)}
+ const lob=o.lob&&o.lob.rid==o.rid?o.lob:{startAt:0,players:{}},now=o.f.srv(),
+  pl=Object.entries(lob.players||{}).sort((a,b)=>(a[1].t||0)-(b[1].t||0)),n=pl.length,
+  dec=lob.dec&&lob.dec.ok,search=!dec&&now<lob.startAt,vt=lob.votes||{},mine=vt[o.pid];
+ const names=(mark)=>pl.slice(0,NC).forEach(([pid,v],i)=>{const m=mark?(vt[pid]===1?' [SI]':vt[pid]===0?' [NO]':' ...'):'';tx((i+1)+'. '+v.n+(pid==o.pid?' (TÚ)':'')+m,i<5?40:136,136+(i%5)*9,'#fff',7)});
+ if(dec){const left=Math.max(0,(lob.dec.goAt-now)/1000);
+  tx('¡PARTIDA ACEPTADA!',128,56,'#7f7',9,'c');tx(''+Math.ceil(left),128,92,'#ffd23a',30,'c');
+  tx('JUGADORES: '+Object.keys(lob.dec.pl||{}).length+'/'+NC,128,122,'#7df',9,'c');names(0);
+  tx('Los puestos libres los ocupan bots',128,188,'#aaa',7,'c');btn('CANCELAR',88,196,80,18,onlCancel,1);return}
+ if(search){const left=Math.max(0,(lob.startAt-now)/1000);
+  tx('BUSCANDO PARTIDA...',128,56,'#fff',9,'c');tx(''+Math.ceil(left),128,92,'#ffd23a',30,'c');
+  X.fillStyle='#222';X.fillRect(48,100,160,6);X.fillStyle='#c8102e';X.fillRect(48,100,160*Math.min(1,Math.max(0,1-left/ONL_WAIT)),6);
+  tx('JUGADORES: '+n+'/'+NC,128,122,'#7df',9,'c');names(0);
+  tx(lob.rounds?'Votación rechazada · se buscan más jugadores':'Los puestos libres los ocupan bots',128,188,lob.rounds?'#ffb347':'#aaa',7,'c');btn('CANCELAR',88,196,80,18,onlCancel,1);return}
+ // votación: ¿jugar solo con los conectados?
+ const left=Math.max(0,(lob.startAt+ONL_VOTE*1000-now)/1000),no=pl.filter(([k])=>vt[k]===0).length,si=pl.filter(([k])=>vt[k]===1).length;
+ tx('¿JUGAR SOLO CON LOS '+n+' CONECTADOS?',128,56,'#fff',8,'c');tx(''+Math.ceil(left),128,90,'#ffd23a',26,'c');
+ X.fillStyle='#222';X.fillRect(48,96,160,5);X.fillStyle='#4a9eff';X.fillRect(48,96,160*Math.min(1,Math.max(0,left/ONL_VOTE)),5);
+ tx('SÍ: '+si+'   NO: '+no+'   SIN VOTAR: '+(n-si-no),128,114,'#7df',8,'c');
+ tx('Sin voto cuenta como SÍ · gana la mayoría · bots en los puestos libres',128,126,'#aaa',6,'c');names(1);
+ if(mine==null){btn('SÍ (ENTER)',20,182,100,18,()=>onlVote(1),1);btn('NO (RETROCESO)',136,182,100,18,()=>onlVote(0))}
+ else tx('Tu voto: '+(mine?'SÍ':'NO')+' · esperando a los demás...',128,194,mine?'#7f7':'#ffb347',7,'c');
+ btn('CANCELAR',92,204,72,13,onlCancel,0)}
 let USER=null,DB={};
 // ---- Firebase: el módulo (al final del archivo) resuelve fbReady con la API, o null si no hay conexión ----
 window.fbReady=new Promise(r=>{window._fbRes=r;setTimeout(()=>r(null),10000)});
@@ -814,7 +855,7 @@ $('auth').addEventListener('keydown',e=>{if(e.key=='Enter')submit()});
 function endRace(){G.st='res';if(USER){const p=G.cars.find(c=>c.hu==0);USER.races=(USER.races||0)+1;if(p&&p.pos==1)USER.wins=(USER.wins||0)+1;saveDB()}
  if(CUP){CUP.gain=Array(NC).fill(0);CUP.race=G.ord.map(c=>c.id);G.ord.forEach((c,i)=>{CUP.gain[c.id]=PTS[i]||0;CUP.pts[c.id]+=PTS[i]||0;if(i==0)CUP.wins[c.id]++});
   CUP.done=CUP.r>=TR.length-1;CUP.pg=0;const o=cupOrder();CUP.grid=[];o.forEach((id,i)=>CUP.grid[id]=i);
-  if(CUP.done&&USER&&o[0]==NC-M.pl){USER.cups=(USER.cups||0)+1;saveDB()}}}
+  if(CUP.done&&USER&&o[0]==(CUP.onl?CUP.onl.me:NC-M.pl)){USER.cups=(USER.cups||0)+1;saveDB()}}}
 const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]};
 const bAt=e=>{const[x,y]=pt(e);return BT.find(b=>x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)};
 cv.addEventListener('pointerdown',e=>{audio();const b=bAt(e);if(b){e.preventDefault();b.fn()}});
@@ -863,20 +904,35 @@ try{
  const online={online:!!rt,srv,
   async join(me,cfg){await ready();
    const r=await rtx(rref(rt,'lobby/current'),cur=>{const now=srv(),mine={n:me.name,c:me.car,t:now};
-    if(cur&&cur.startAt!=null&&now<cur.startAt+5000){
-     if(now>cur.startAt-2000)return;                                   // sala cerrada: esperar la siguiente
+    if(cur&&cur.startAt!=null&&!(cur.dec&&now>cur.dec.goAt)&&now<cur.startAt+120000){
+     if(cur.dec||now>=cur.startAt)return;                              // sala cerrada o votando: esperar la siguiente
      const pl=cur.players||{};if(!pl[me.pid]&&Object.keys(pl).length>=10)return;   // sala llena
      pl[me.pid]=pl[me.pid]||mine;cur.players=pl;return cur}
-    return{rid:now+'_'+me.pid,startAt:now+cfg.wait,track:cfg.track,laps:cfg.laps,players:{[me.pid]:mine}}},{applyLocally:false});
+    return{rid:now+'_'+me.pid,startAt:now+cfg.wait,laps:cfg.laps,players:{[me.pid]:mine}}},{applyLocally:false});
    if(!r.committed)return null;const v=r.snapshot.val();if(!v||!v.players||!v.players[me.pid])return null;
    dLobby=onDisconnect(rref(rt,'lobby/current/players/'+me.pid));dLobby.remove().catch(()=>{});return v},
+  // voto de cada jugador tras la espera: 1 = jugar con los conectados, 0 = seguir esperando
+  async vote(rid,pid,v){await ready();return rtx(rref(rt,'lobby/current'),cur=>{
+    if(!cur||cur.rid!=rid||cur.dec||!cur.players||!cur.players[pid]||srv()<cur.startAt)return;
+    (cur.votes=cur.votes||{})[pid]=v;return cur},{applyLocally:false})},
+  // cierra la votación (la decide el primer cliente que la ve completa o vencida): mayoría de SÍ -> arranca; si no, se reabre la búsqueda
+  async decide(rid,voteMs,cap,waitMs){await ready();return rtx(rref(rt,'lobby/current'),cur=>{const now=srv();
+    if(!cur||cur.rid!=rid||cur.dec||cur.startAt==null||now<cur.startAt)return;
+    const pl=cur.players||{},ids=Object.keys(pl),vt=cur.votes||{};if(!ids.length)return;
+    const full=ids.length>=cap,all=ids.every(k=>vt[k]!=null),late=now>=cur.startAt+voteMs;
+    if(!full&&!all&&!late)return;
+    const no=ids.filter(k=>vt[k]===0).length,yes=ids.length-no;
+    if(full||yes>no){cur.dec={ok:1,goAt:now+3000,pl:JSON.parse(JSON.stringify(pl))};return cur}
+    cur.startAt=now+waitMs;delete cur.votes;cur.rounds=(cur.rounds||0)+1;return cur},{applyLocally:false})},
+  // hora de servidor en la que todos arrancan la carrera n de la copa (la fija el primero que llega)
+  async nextAt(rid,n,delay){await ready();const r=await rtx(rref(rt,'races/'+rid+'/go/'+n),cur=>cur==null?srv()+delay:undefined,{applyLocally:false});return r.snapshot.val()},
   watchLobby(cb){return onValue(rref(rt,'lobby/current'),s=>cb(s.val()))},
   watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h),b=onChildChanged(r,h);return()=>{a();b()}},
   armSt(rid,pid){dSt=onDisconnect(rref(rt,'races/'+rid+'/st/'+pid));dSt.remove().catch(()=>{})},
   send(rid,pid,v){rset(rref(rt,'races/'+rid+'/st/'+pid),v).catch(()=>{})},
   cancelDisc(){if(dLobby){dLobby.cancel().catch(()=>{});dLobby=null}},
   async stop(rid,pid,phase){
-   if(phase=='lobby'){online.cancelDisc();await rtx(rref(rt,'lobby/current'),cur=>{if(cur&&cur.players&&cur.players[pid]){delete cur.players[pid];return Object.keys(cur.players).length?cur:null}return cur},{applyLocally:false})}
+   if(phase=='lobby'){online.cancelDisc();await rtx(rref(rt,'lobby/current'),cur=>{if(cur&&cur.players&&cur.players[pid]){delete cur.players[pid];if(cur.votes)delete cur.votes[pid];return Object.keys(cur.players).length?cur:null}return cur},{applyLocally:false})}
    else{if(dSt){dSt.cancel().catch(()=>{});dSt=null}await rremove(rref(rt,'races/'+rid+'/st/'+pid))}}
  };
  window._fbRes({
