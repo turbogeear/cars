@@ -772,7 +772,7 @@ function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
   if(left<=0){const T=o.nextAt;CUP.r++;CUP.pg=0;onlRace(o,T)}}}
 // jugador inactivo: 4 min después de que termine el primer humano sigue sin acabar -> sale al menú y los demás lo ven como bot
 function onlCount(){const o=ON;if(window._onlN!=null&&!window._presErr)return window._onlN;return o&&o.live?1+Object.keys(o.net).length:o&&o.lob&&o.lob.players?Object.keys(o.lob.players).length:null}
-function onlHud(){const o=ON,g=window._onlN!=null&&!window._presErr?window._onlN:null;if(o&&o.joined&&!o.live){const l=o.lob&&o.lob.players?Object.keys(o.lob.players).length:1;tx('EN EL LOBBY: '+l+(g!=null?' · '+g+' ONLINE':''),W/2,10,'#7f7',7,'c')}else if(g!=null)tx('● '+g+' ONLINE',W/2,11,'#7f7',8,'c')}
+function onlHud(){const o=ON,g=window._onlN!=null&&!window._presErr?window._onlN:null;if(o&&o.joined&&!o.live){const l=o.lob&&o.lob.players?Object.keys(o.lob.players).length:1;tx('EN EL LOBBY: '+l+(g!=null?' · '+g+' ONLINE':''),W/2,10,'#7f7',7,'c')}else if(g!=null)tx('● '+g+' ONLINE',W/2,11,'#7f7',8,'c');else if(window._presErr)tx('ONLINE: ERROR '+String(window._presErr).toUpperCase().slice(0,30),W/2,11,'#ff7a7a',6,'c')}
 function onlKick(){window._kick={m:'EXPULSADO POR INACTIVIDAD · UN BOT TOMA TU LUGAR',u:performance.now()+9000};cupQuit()}
 function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.1)return;o.sa=0;
  const c=G.cars.find(c=>c.hu==0);if(!c)return;
@@ -820,7 +820,7 @@ async function hash(id,p){const t='tg|'+id.toLowerCase()+'|'+p;try{const b=await
 const $=i=>document.getElementById(i);let amode='in';
 function msg(t,ok){const e=$('msg');e.textContent=t;e.style.color=ok?'#7f7':'#ff7a7a'}
 function setMode(m){amode=m;$('tin').classList.toggle('on',m=='in');$('tup').classList.toggle('on',m=='up');$('pw2').style.display=m=='up'?'block':'none';$('go').textContent=m=='in'?'ENTRAR':'CREAR CUENTA';$('pw').autocomplete=m=='in'?'current-password':'new-password';msg('')}
-function login(u){USER=u;fbApi().then(f=>{if(!f||!f.watchPresence)return;window._sid=u.id.toLowerCase()+'_'+Math.random().toString(36).slice(2,6);f.pres(window._sid,1);if(!window._presW)window._presW=f.watchPresence(n=>{window._onlN=n})});try{localStorage.setItem('tg_ses',u.id.toLowerCase())}catch(e){}$('auth').style.display='none';$('pw').value='';$('pw2').value='';M.s='mode'}
+function login(u){USER=u;fbApi().then(f=>{if(!f||!f.watchPresence)return;window._sid=u.id.toLowerCase()+'_'+Math.random().toString(36).slice(2,6);f.pres(window._sid,1);if(!window._presT)window._presT=setInterval(()=>{if(window._sid&&USER)f.pres(window._sid,1)},30000);if(!window._presW)window._presW=f.watchPresence(n=>{window._onlN=n})});try{localStorage.setItem('tg_ses',u.id.toLowerCase())}catch(e){}$('auth').style.display='none';$('pw').value='';$('pw2').value='';M.s='mode'}
 function logout(){try{window._sid&&fbApi().then(f=>f&&f.pres&&f.pres(window._sid,0))}catch(e){}USER=null;try{localStorage.removeItem('tg_ses')}catch(e){}$('auth').style.display='flex';setMode('in');$('uid').value=''}
 let busy=0;
 async function submit(){const id=$('uid').value.trim(),p=$('pw').value,k=id.toLowerCase();
@@ -930,8 +930,8 @@ try{
     if(full||yes>no){cur.dec={ok:1,goAt:now+3000,pl:JSON.parse(JSON.stringify(pl))};return cur}
     cur.startAt=now+waitMs;delete cur.votes;cur.rounds=(cur.rounds||0)+1;return cur},{applyLocally:false})},
   // presencia: cuenta de jugadores online (requiere la regla 'presence', ver README)
-  pres(pid,on){try{const r=rref(rt,'presence/'+pid);if(on){dPres=onDisconnect(r);dPres.remove().catch(()=>{});rset(r,srv()).catch(()=>{window._presErr=1})}else{if(dPres){dPres.cancel().catch(()=>{});dPres=null}rremove(r).catch(()=>{})}}catch(e){}},
-  watchPresence(cb){try{return onValue(rref(rt,'presence'),s=>{window._presErr=0;cb(s.numChildren())},()=>{window._presErr=1})}catch(e){}},
+  async pres(pid,on){try{await ready();const r=rref(rt,'presence/'+pid);if(on){dPres=onDisconnect(r);dPres.remove().catch(()=>{});await rset(r,srv());window._presErr=0}else{if(dPres){dPres.cancel().catch(()=>{});dPres=null}await rremove(r)}}catch(e){window._presErr=(e&&(e.code||e.message))||1}},
+  watchPresence(cb){let un=null,dead=0;const go=async()=>{try{await ready();if(dead)return;un=onValue(rref(rt,'presence'),s=>{window._presErr=0;cb(s.numChildren())},e=>{window._presErr=(e&&(e.code||e.message))||1;un=null;setTimeout(go,8000)})}catch(e){window._presErr=1;setTimeout(go,8000)}};go();return()=>{dead=1;un&&un()}},
   watchLobby(cb){return onValue(rref(rt,'lobby/current'),s=>cb(s.val()))},
   watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h,e=>{window._onlErr=e&&(e.code||e.message)||'error'}),b=onChildChanged(r,h);return()=>{a();b()}},
   armSt(rid,pid){dSt=onDisconnect(rref(rt,'races/'+rid+'/st/'+pid));dSt.remove().catch(()=>{})},
