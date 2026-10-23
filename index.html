@@ -703,6 +703,7 @@ function render(){BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
   if(hs.length==1)carView(hs[0],0,0,W,H);else{const w2=W>>1;carView(hs[0],0,0,w2-1,H);carView(hs[1],w2+1,0,W-w2-1,H);X.fillStyle='#000';X.fillRect(w2-1,0,2,H)}
   if(G.st=='race'&&G.cd>0)tx(G.cd>.5?''+Math.ceil(G.cd-.5):'¡YA!',W/2,H/2+10,'#ffd23a',40,'c');
   if(CUP&&G.st=='race'&&G.t<4)tx('COPA · CARRERA '+(CUP.r+1)+'/'+TR.length+' · '+TR[CUP.r].n,W/2,H/2-40,'#fff',9,'c');
+  if(ON&&ON.live&&G.st=='race'){const k=G.cars.filter(c=>c.rm).length,nn=Object.keys(ON.net).length;tx(window._onlErr?'RED: '+window._onlErr:'ONLINE '+nn+'/'+k+' JUGADORES',W/2,12,window._onlErr?'#ff7a7a':'#7f7',7,'c')}
   if(G.st=='res'){X.fillStyle='rgba(0,0,0,.98)';X.fillRect(0,0,W,H);X.save();X.translate(OX,OY);if(CUP){cupRes();X.restore()}else{tx('RESULTADOS',128,20,'#ffd23a',16,'c');tx('DIFICULTAD: '+DFN[M.df],128,32,'#7df',7,'c');
    G.ord.forEach((c,i)=>{const y=51+i*14.5;X.fillStyle=c.def.c;X.fillRect(40,y-8,14,8);tx((i+1)+'. '+(c.nm||(c.hu!=null?(c.hu==0&&USER?USER.id:'JUGADOR '+(c.hu+1)):'CPU'))+' - '+c.def.n,62,y,c.hu!=null||c.rm?'#7df':'#fff',9)});
    btn('MENÚ',88,198,80,20,()=>{M.s='mode';startDemo(M.t)},1);X.restore()}}}
@@ -757,15 +758,14 @@ function onlRace(o,T){sfx('ign');try{plNext()}catch(e){}
   c.id=s;cs.push(c)}
  const late=Math.max(0,(o.f.srv()-T)/1000);
  G={st:'race',cars:cs,cd:Math.max(.5,3.5-late),t:0,laps:o.laps,fc:0,e:0,w:0};rank();
- o.key=o.rid+'/r'+CUP.r;o.net={};o.goAt=performance.now()/1000+G.cd;o.live=1;o.sa=0;o.nextAt=null;o.nreq=0;o.endT=null;
+ o.key=o.rid+'_r'+CUP.r;o.net={};o.goAt=performance.now()/1000+G.cd;o.live=1;o.sa=0;o.nextAt=null;o.nreq=0;o.endT=null;
  o.unw=o.f.watchRace(o.key,(pid,v)=>{if(ON===o&&pid!=o.pid&&v)o.net[pid]=Object.assign({},v,{rt:performance.now()/1000})});
  o.f.armSt(o.key,o.pid)}
 // Entre carreras: todos acuerdan (hora de servidor) cuándo empieza la siguiente
 function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
  if(o.endT==null)o.endT=o.f.srv();
  if(CUP.done){if(CUP.pg==0&&o.f.srv()-o.endT>6000)CUP.pg=1;return}
- if(o.nextAt==null&&!o.nreq){o.nreq=1;const r=CUP.r+1;
-  o.f.nextAt(o.rid,r,ONL_NEXT*1000).then(v=>{if(ON===o&&CUP&&CUP.r+1==r)o.nextAt=v||o.f.srv()+ONL_NEXT*1000}).catch(()=>{if(ON===o)o.nextAt=o.f.srv()+ONL_NEXT*1000})}
+ if(o.nextAt==null)o.nextAt=o.endT+ONL_NEXT*1000;
  if(o.nextAt!=null){const left=o.nextAt-o.f.srv();
   if(CUP.pg==0&&left<ONL_STAND*1000)CUP.pg=1;
   if(left<=0){const T=o.nextAt;CUP.r++;CUP.pg=0;onlRace(o,T)}}}
@@ -924,12 +924,10 @@ try{
     const no=ids.filter(k=>vt[k]===0).length,yes=ids.length-no;
     if(full||yes>no){cur.dec={ok:1,goAt:now+3000,pl:JSON.parse(JSON.stringify(pl))};return cur}
     cur.startAt=now+waitMs;delete cur.votes;cur.rounds=(cur.rounds||0)+1;return cur},{applyLocally:false})},
-  // hora de servidor en la que todos arrancan la carrera n de la copa (la fija el primero que llega)
-  async nextAt(rid,n,delay){await ready();const r=await rtx(rref(rt,'races/'+rid+'/go/'+n),cur=>cur==null?srv()+delay:undefined,{applyLocally:false});return r.snapshot.val()},
   watchLobby(cb){return onValue(rref(rt,'lobby/current'),s=>cb(s.val()))},
-  watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h),b=onChildChanged(r,h);return()=>{a();b()}},
+  watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h,e=>{window._onlErr=e&&(e.code||e.message)||'error'}),b=onChildChanged(r,h);return()=>{a();b()}},
   armSt(rid,pid){dSt=onDisconnect(rref(rt,'races/'+rid+'/st/'+pid));dSt.remove().catch(()=>{})},
-  send(rid,pid,v){rset(rref(rt,'races/'+rid+'/st/'+pid),v).catch(()=>{})},
+  send(rid,pid,v){rset(rref(rt,'races/'+rid+'/st/'+pid),v).catch(e=>{window._onlErr=e&&(e.code||e.message)||'error'})},
   cancelDisc(){if(dLobby){dLobby.cancel().catch(()=>{});dLobby=null}},
   async stop(rid,pid,phase){
    if(phase=='lobby'){online.cancelDisc();await rtx(rref(rt,'lobby/current'),cur=>{if(cur&&cur.players&&cur.players[pid]){delete cur.players[pid];if(cur.votes)delete cur.votes[pid];return Object.keys(cur.players).length?cur:null}return cur},{applyLocally:false})}
