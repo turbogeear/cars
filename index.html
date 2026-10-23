@@ -703,7 +703,7 @@ function render(){BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
   if(hs.length==1)carView(hs[0],0,0,W,H);else{const w2=W>>1;carView(hs[0],0,0,w2-1,H);carView(hs[1],w2+1,0,W-w2-1,H);X.fillStyle='#000';X.fillRect(w2-1,0,2,H)}
   if(G.st=='race'&&G.cd>0)tx(G.cd>.5?''+Math.ceil(G.cd-.5):'¡YA!',W/2,H/2+10,'#ffd23a',40,'c');
   if(CUP&&G.st=='race'&&G.t<4)tx('COPA · CARRERA '+(CUP.r+1)+'/'+TR.length+' · '+TR[CUP.r].n,W/2,H/2-40,'#fff',9,'c');
-  if(ON&&ON.live&&G.st=='race'){const k=G.cars.filter(c=>c.rm).length,nn=Object.keys(ON.net).length;tx(window._onlErr?'RED: '+window._onlErr:'ONLINE '+nn+'/'+k+' JUGADORES · '+(onlCount()??'-')+' ONLINE',W/2,12,window._onlErr?'#ff7a7a':'#7f7',7,'c')}
+  if(ON&&ON.live&&G.st=='race'){const k=G.cars.filter(c=>c.rm).length,nn=Object.keys(ON.net).length;tx(window._onlErr?'RED: '+window._onlErr:(k+1)+(k?' jugadores online':' jugador online'),W/2,26,window._onlErr?'#ff7a7a':'#7f7',7,'c')}
   if(ON&&ON.live&&G.st=='race'&&G.cars.some(c=>c.hu==0&&c.fin)){const w=G.cars.filter(c=>c.rm&&!c.fin).map(c=>c.nm);if(w.length){tx('¡HAS TERMINADO! ESPERANDO A LOS RIVALES',W/2,H/2-30,'#ffd23a',10,'c');tx(w.slice(0,4).join(' · ')+(w.length>4?' +'+(w.length-4):''),W/2,H/2-16,'#fff',8,'c')}}
   if(G.st=='res'){X.fillStyle='rgba(0,0,0,.98)';X.fillRect(0,0,W,H);X.save();X.translate(OX,OY);if(CUP){cupRes();X.restore()}else{tx('RESULTADOS',128,20,'#ffd23a',16,'c');tx('DIFICULTAD: '+DFN[M.df],128,32,'#7df',7,'c');
    G.ord.forEach((c,i)=>{const y=51+i*14.5;X.fillStyle=c.def.c;X.fillRect(40,y-8,14,8);tx((i+1)+'. '+(c.nm||(c.hu!=null?(c.hu==0&&USER?USER.id:'JUGADOR '+(c.hu+1)):'CPU'))+' - '+c.def.n,62,y,c.hu!=null||c.rm?'#7df':'#fff',9)});
@@ -760,7 +760,7 @@ function onlRace(o,T){sfx('ign');try{plNext()}catch(e){}
  const late=Math.max(0,(o.f.srv()-T)/1000);
  G={st:'race',cars:cs,cd:Math.max(.5,3.5-late),t:0,laps:o.laps,fc:0,e:0,w:0};rank();
  o.key=o.rid+'_r'+CUP.r;o.net={};o.goAt=performance.now()/1000+G.cd;o.live=1;o.sa=0;o.nextAt=null;o.nreq=0;o.endT=null;
- o.unw=o.f.watchRace(o.key,(pid,v)=>{if(ON===o&&pid!=o.pid&&v)o.net[pid]=Object.assign({},v,{rt:performance.now()/1000})});
+ o.unw=o.f.watchRace(o.key,(pid,v)=>{if(ON!==o||pid==o.pid)return;if(v)o.net[pid]=Object.assign({},v,{rt:performance.now()/1000});else o.net[pid]={gone:1,rt:0}});
  o.f.armSt(o.key,o.pid)}
 // Entre carreras: todos acuerdan (hora de servidor) cuándo empieza la siguiente
 function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
@@ -779,7 +779,7 @@ function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(
  o.f.send(o.key,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),t:o.f.srv()})}
 // coche de otro jugador: sigue sus datos de red; si deja de enviar durante 5 s pasa a ser un bot
 function rmUpd(c,dt){const o=ON,now=performance.now()/1000,n=o&&o.net[c.uid],last=n?n.rt:(o?o.goAt:0);
- if(!o||now-last>5){c.rm=0;c.nm=(c.nm||'CPU')+' (BOT)';return upd(c,dt)}
+ if(!o||now-last>5||(n&&n.gone)){c.rm=0;c.nm=(c.nm||'CPU')+' (BOT)';return upd(c,dt)}
  if(!n)return;
  const age=Math.min(.6,Math.max(0,(o.f.srv()-n.t)/1000)),Dt=(n.lap-1)*L+n.z+n.sp*(age+now-n.rt);
  let D=(c.lap-1)*L+c.z+c.sp*dt;const e=Dt-D;D+=Math.abs(e)>L*.4?e:e*Math.min(1,dt*8);
@@ -893,7 +893,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,signInAnonymously} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,runTransaction} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getAnalytics,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
-import {getDatabase,ref as rref,set as rset,onValue,onChildAdded,onChildChanged,runTransaction as rtx,onDisconnect,remove as rremove} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import {getDatabase,ref as rref,set as rset,onValue,onChildAdded,onChildChanged,onChildRemoved,runTransaction as rtx,onDisconnect,remove as rremove} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 // URL de tu Realtime Database (cópiala de Firebase > Realtime Database si es distinta)
 const RTDB_URL="https://turbo-gear-3496e-default-rtdb.firebaseio.com";
 const firebaseConfig={apiKey:"AIzaSyA4lJdkEG5QZCY0jrMQyOPEyJNdJnNUPrM",authDomain:"turbo-gear-3496e.firebaseapp.com",projectId:"turbo-gear-3496e",storageBucket:"turbo-gear-3496e.firebasestorage.app",messagingSenderId:"429165957707",appId:"1:429165957707:web:6d8739ae4adb8c3d7473ce",measurementId:"G-W0024DLN39"};
@@ -934,7 +934,7 @@ try{
   async pres(pid,on){try{await ready();const r=rref(rt,'presence/'+pid);if(on){dPres=onDisconnect(r);dPres.remove().catch(()=>{});await rset(r,srv());window._presErr=0}else{if(dPres){dPres.cancel().catch(()=>{});dPres=null}await rremove(r)}}catch(e){window._presErr=(e&&(e.code||e.message))||1}},
   watchPresence(cb){let un=null,dead=0;const go=async()=>{try{await ready();if(dead)return;un=onValue(rref(rt,'presence'),s=>{window._presErr=0;cb(s.numChildren())},e=>{window._presErr=(e&&(e.code||e.message))||1;un=null;setTimeout(go,8000)})}catch(e){window._presErr=1;setTimeout(go,8000)}};go();return()=>{dead=1;un&&un()}},
   watchLobby(cb){return onValue(rref(rt,'lobby/current'),s=>cb(s.val()))},
-  watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h,e=>{window._onlErr=e&&(e.code||e.message)||'error'}),b=onChildChanged(r,h);return()=>{a();b()}},
+  watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h,e=>{window._onlErr=e&&(e.code||e.message)||'error'}),b=onChildChanged(r,h),c=onChildRemoved(r,s=>cb(s.key,null));return()=>{a();b();c()}},
   armSt(rid,pid){dSt=onDisconnect(rref(rt,'races/'+rid+'/st/'+pid));dSt.remove().catch(()=>{})},
   send(rid,pid,v){rset(rref(rt,'races/'+rid+'/st/'+pid),v).catch(e=>{window._onlErr=e&&(e.code||e.message)||'error'})},
   cancelDisc(){if(dLobby){dLobby.cancel().catch(()=>{});dLobby=null}},
