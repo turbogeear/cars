@@ -772,7 +772,7 @@ function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
   if(left<=0){const T=o.nextAt;CUP.r++;CUP.pg=0;onlRace(o,T)}}}
 // jugador inactivo: 4 min después de que termine el primer humano sigue sin acabar -> sale al menú y los demás lo ven como bot
 function onlCount(){const o=ON;if(window._onlN!=null&&!window._presErr)return window._onlN;return o&&o.live?1+Object.keys(o.net).length:o&&o.lob&&o.lob.players?Object.keys(o.lob.players).length:null}
-function onlHud(){const o=ON,g=window._onlN!=null&&!window._presErr?window._onlN:null;if(o&&o.joined&&!o.live){const l=o.lob&&o.lob.players?Object.keys(o.lob.players).length:1;tx('EN EL LOBBY: '+l+(g!=null?' · '+g+' ONLINE':''),W/2,10,'#7f7',7,'c')}else if(g!=null)tx('● '+g+' ONLINE',W/2,11,'#7f7',8,'c');else if(window._presErr)tx('ONLINE: ERROR '+String(window._presErr).toUpperCase().slice(0,30),W/2,11,'#ff7a7a',6,'c')}
+function onlHud(){const o=ON,g=window._onlN!=null&&!window._presErr?window._onlN:null;if(o&&o.joined&&!o.live){const l=o.lob&&o.lob.players?Object.keys(o.lob.players).length:1;tx('EN EL LOBBY: '+l+(g!=null?' · '+g+' ONLINE':''),W/2,10,'#7f7',7,'c')}else if(g!=null)tx('● '+g+' ONLINE',W/2,11,'#7f7',8,'c');else if(USER)tx(window._presErr?'ONLINE: ERROR '+String(window._presErr).toUpperCase().slice(0,30):'ONLINE: CONECTANDO...',W/2,11,window._presErr?'#ff7a7a':'#aaa',6,'c')}
 function onlKick(){window._kick={m:'EXPULSADO POR INACTIVIDAD · UN BOT TOMA TU LUGAR',u:performance.now()+9000};cupQuit()}
 function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.1)return;o.sa=0;
  const c=G.cars.find(c=>c.hu==0);if(!c)return;
@@ -820,8 +820,9 @@ async function hash(id,p){const t='tg|'+id.toLowerCase()+'|'+p;try{const b=await
 const $=i=>document.getElementById(i);let amode='in';
 function msg(t,ok){const e=$('msg');e.textContent=t;e.style.color=ok?'#7f7':'#ff7a7a'}
 function setMode(m){amode=m;$('tin').classList.toggle('on',m=='in');$('tup').classList.toggle('on',m=='up');$('pw2').style.display=m=='up'?'block':'none';$('go').textContent=m=='in'?'ENTRAR':'CREAR CUENTA';$('pw').autocomplete=m=='in'?'current-password':'new-password';msg('')}
-function login(u){USER=u;fbApi().then(f=>{if(!f||!f.watchPresence)return;window._sid=u.id.toLowerCase()+'_'+Math.random().toString(36).slice(2,6);f.pres(window._sid,1);if(!window._presT)window._presT=setInterval(()=>{if(window._sid&&USER)f.pres(window._sid,1)},30000);if(!window._presW)window._presW=f.watchPresence(n=>{window._onlN=n})});try{localStorage.setItem('tg_ses',u.id.toLowerCase())}catch(e){}$('auth').style.display='none';$('pw').value='';$('pw2').value='';M.s='mode'}
-function logout(){try{window._sid&&fbApi().then(f=>f&&f.pres&&f.pres(window._sid,0))}catch(e){}USER=null;try{localStorage.removeItem('tg_ses')}catch(e){}$('auth').style.display='flex';setMode('in');$('uid').value=''}
+function presBoot(){if(window._pbT)return;let busy=0;const go=async()=>{if(!USER||busy)return;busy=1;try{const f=await fbApi();if(!f||!f.watchPresence){window._presErr='SIN SERVIDOR';return}if(!window._sid||window._sidU!==USER.id){window._sid=USER.id.toLowerCase()+'_'+Math.random().toString(36).slice(2,6);window._sidU=USER.id;f.pres(window._sid,1)}if(!window._presW)window._presW=f.watchPresence(n=>{window._onlN=n})}catch(e){window._presErr=String(e&&e.message||e)}finally{busy=0}};window._pbT=setInterval(go,2000);window._pbH=setInterval(async()=>{if(!window._sid||!USER)return;const f=await fbApi();if(f)f.pres(window._sid,1)},30000);go()}
+function login(u){USER=u;presBoot();try{localStorage.setItem('tg_ses',u.id.toLowerCase())}catch(e){}$('auth').style.display='none';$('pw').value='';$('pw2').value='';M.s='mode'}
+function logout(){try{window._sid&&fbApi().then(f=>f&&f.pres&&f.pres(window._sid,0))}catch(e){}window._sid=null;USER=null;try{localStorage.removeItem('tg_ses')}catch(e){}$('auth').style.display='flex';setMode('in');$('uid').value=''}
 let busy=0;
 async function submit(){const id=$('uid').value.trim(),p=$('pw').value,k=id.toLowerCase();
  if(!/^[A-Za-z0-9_]{3,16}$/.test(id))return msg('ID: 3 a 16 letras, números o _');
