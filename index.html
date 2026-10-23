@@ -221,7 +221,7 @@ function posAnn(dt){if(G.cd>0)return;for(const c of G.cars){if(c.hu==null)contin
 function step(dt){T+=dt;
  if(G.st=='menu'){menu();if(G.st=='menu'){G.cars.forEach(c=>upd(c,dt));rank()}}
  else if(G.st=='race'){if(G.cd>0){G.cd-=dt;if(G.cd<=0)sfx('launch')}else{G.t+=dt;G.cars.forEach(c=>upd(c,dt));
-   {const on=ON&&ON.live,hs=G.cars.filter(c=>c.hu!=null||(on&&c.rm));if(on&&G.cars.some(c=>c.hu!=null&&c.fin))G.w+=dt;if(hs.every(c=>c.fin)){G.e+=dt;if(G.e>3)endRace()}else if(on&&G.w>240)endRace()}}
+   {const on=ON&&ON.live,hs=G.cars.filter(c=>c.hu!=null||(on&&c.rm));if(on&&G.cars.some(c=>(c.hu!=null||c.rm)&&c.fin))G.w+=dt;if(hs.every(c=>c.fin)){G.e+=dt;if(G.e>3)endRace()}else if(on&&G.w>240){if(G.cars.some(c=>c.hu==0&&!c.fin))onlKick();else{G.cars.forEach(c=>{if(c.rm&&!c.fin){c.rm=0;c.nm=(c.nm||'CPU')+' (BOT)'}});endRace()}}}}
   rank();posAnn(dt);if(hit('Escape')){if(CUP){cupQuit()}else{M.s='mode';startDemo(M.t)}}}
  else{G.cars.forEach(c=>upd(c,dt));rank();if(CUP){if(CUP.onl){onlCupTick();if(hit('Enter','Space')){if(CUP.pg==0)CUP.pg=1;else if(CUP.done)cupQuit()}else if(hit('Escape'))cupQuit()}else if(hit('Enter','Space'))cupNext();else if(hit('Escape'))cupQuit()}else if(hit('Enter','Escape','Space')){M.s='mode';startDemo(M.t)}}
  if(ON&&ON.live)onlSend(dt);for(const k in P)delete P[k]}
@@ -698,7 +698,7 @@ function ui(){if(M.s=='tr'){X.globalCompositeOperation='saturation';X.fillStyle=
   btn('ATRÁS',20,202,70,16,()=>{M.s=M.pl==2?'c1':'c0'});btn('¡CORRER!',106,202,130,16,startRace,1)}
  tx('También: ENTER / ESC / flechas',128,221,'#888',6,'c');X.restore()}
 function render(){BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
- if(G.st=='menu'){view(G.cars[0],0,0,W,H);ui()}
+ if(G.st=='menu'){view(G.cars[0],0,0,W,H);ui();if(window._kick&&performance.now()<window._kick.u)tx(window._kick.m,W/2,14,'#ff7a7a',8,'c')}
  else{const hs=G.cars.filter(c=>c.hu!=null);
   if(hs.length==1)carView(hs[0],0,0,W,H);else{const w2=W>>1;carView(hs[0],0,0,w2-1,H);carView(hs[1],w2+1,0,W-w2-1,H);X.fillStyle='#000';X.fillRect(w2-1,0,2,H)}
   if(G.st=='race'&&G.cd>0)tx(G.cd>.5?''+Math.ceil(G.cd-.5):'¡YA!',W/2,H/2+10,'#ffd23a',40,'c');
@@ -770,6 +770,8 @@ function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
  if(o.nextAt!=null){const left=o.nextAt-o.f.srv();
   if(CUP.pg==0&&left<ONL_STAND*1000)CUP.pg=1;
   if(left<=0){const T=o.nextAt;CUP.r++;CUP.pg=0;onlRace(o,T)}}}
+// jugador inactivo: 4 min después de que termine el primer humano sigue sin acabar -> sale al menú y los demás lo ven como bot
+function onlKick(){window._kick={m:'EXPULSADO POR INACTIVIDAD · UN BOT TOMA TU LUGAR',u:performance.now()+9000};cupQuit()}
 function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.1)return;o.sa=0;
  const c=G.cars.find(c=>c.hu==0);if(!c)return;
  o.f.send(o.key,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),t:o.f.srv()})}
