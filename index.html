@@ -221,7 +221,7 @@ function posAnn(dt){if(G.cd>0)return;for(const c of G.cars){if(c.hu==null)contin
 function step(dt){T+=dt;
  if(G.st=='menu'){menu();if(G.st=='menu'){G.cars.forEach(c=>upd(c,dt));rank()}}
  else if(G.st=='race'){if(G.cd>0){G.cd-=dt;if(G.cd<=0)sfx('launch')}else{G.t+=dt;G.cars.forEach(c=>upd(c,dt));
-   {const on=ON&&ON.live,hs=G.cars.filter(c=>c.hu!=null||(on&&c.rm));if(on&&G.cars.some(c=>c.hu!=null&&c.fin))G.w+=dt;if(hs.every(c=>c.fin)){G.e+=dt;if(G.e>3)endRace()}else if(on&&G.w>25)endRace()}}
+   {const on=ON&&ON.live,hs=G.cars.filter(c=>c.hu!=null||(on&&c.rm));if(on&&G.cars.some(c=>c.hu!=null&&c.fin))G.w+=dt;if(hs.every(c=>c.fin)){G.e+=dt;if(G.e>3)endRace()}else if(on&&G.w>240)endRace()}}
   rank();posAnn(dt);if(hit('Escape')){if(CUP){cupQuit()}else{M.s='mode';startDemo(M.t)}}}
  else{G.cars.forEach(c=>upd(c,dt));rank();if(CUP){if(CUP.onl){onlCupTick();if(hit('Enter','Space')){if(CUP.pg==0)CUP.pg=1;else if(CUP.done)cupQuit()}else if(hit('Escape'))cupQuit()}else if(hit('Enter','Space'))cupNext();else if(hit('Escape'))cupQuit()}else if(hit('Enter','Escape','Space')){M.s='mode';startDemo(M.t)}}
  if(ON&&ON.live)onlSend(dt);for(const k in P)delete P[k]}
@@ -704,6 +704,7 @@ function render(){BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
   if(G.st=='race'&&G.cd>0)tx(G.cd>.5?''+Math.ceil(G.cd-.5):'¡YA!',W/2,H/2+10,'#ffd23a',40,'c');
   if(CUP&&G.st=='race'&&G.t<4)tx('COPA · CARRERA '+(CUP.r+1)+'/'+TR.length+' · '+TR[CUP.r].n,W/2,H/2-40,'#fff',9,'c');
   if(ON&&ON.live&&G.st=='race'){const k=G.cars.filter(c=>c.rm).length,nn=Object.keys(ON.net).length;tx(window._onlErr?'RED: '+window._onlErr:'ONLINE '+nn+'/'+k+' JUGADORES',W/2,12,window._onlErr?'#ff7a7a':'#7f7',7,'c')}
+  if(ON&&ON.live&&G.st=='race'&&G.cars.some(c=>c.hu==0&&c.fin)){const w=G.cars.filter(c=>c.rm&&!c.fin).map(c=>c.nm);if(w.length){tx('¡HAS TERMINADO! ESPERANDO A LOS RIVALES',W/2,H/2-30,'#ffd23a',10,'c');tx(w.slice(0,4).join(' · ')+(w.length>4?' +'+(w.length-4):''),W/2,H/2-16,'#fff',8,'c')}}
   if(G.st=='res'){X.fillStyle='rgba(0,0,0,.98)';X.fillRect(0,0,W,H);X.save();X.translate(OX,OY);if(CUP){cupRes();X.restore()}else{tx('RESULTADOS',128,20,'#ffd23a',16,'c');tx('DIFICULTAD: '+DFN[M.df],128,32,'#7df',7,'c');
    G.ord.forEach((c,i)=>{const y=51+i*14.5;X.fillStyle=c.def.c;X.fillRect(40,y-8,14,8);tx((i+1)+'. '+(c.nm||(c.hu!=null?(c.hu==0&&USER?USER.id:'JUGADOR '+(c.hu+1)):'CPU'))+' - '+c.def.n,62,y,c.hu!=null||c.rm?'#7df':'#fff',9)});
    btn('MENÚ',88,198,80,20,()=>{M.s='mode';startDemo(M.t)},1);X.restore()}}}
