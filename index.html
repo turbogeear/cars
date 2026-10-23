@@ -156,12 +156,14 @@ function upd(c,dt){if(c.rm){rmUpd(c,dt);return}
  for(const o of G.cars)if(o!==c){const g=gp(c,o);if(g>0&&g<260&&Math.abs(o.x-c.x)<.32/(TK.w||1)){if(c.sp>o.sp){if(c.hu!=null&&c.sp-o.sp>400&&T-(c.ct||0)>.6){c.ct=T;sfx('crash')}c.sp=o.sp*.92}c.x+=(c.x>=o.x?1:-1)*dt*1.5/(TK.w||1)}}
  c.bg+=sg.cv*pr*dt*40;
  c.z+=c.sp*dt;
- if(c.z>=L){c.z-=L;if(c.hu==null){if(!c.pl&&c.bu>5)c.fpl=c.bu;c.bu=0;c.pl=0}if(c.hu==0&&!c.fin&&G.st=='race'){if(c.lap>1)recLap(G.t-(c.l0||0));c.l0=G.t}c.lap++;if(c.hu!=null&&G.st=='race'&&c.lap>1&&c.lap<G.laps){c.lb=3;c.ld=c.lap-1;c.lr=G.laps-c.ld}if(c.hu!=null&&G.laps>1&&c.lap==G.laps&&G.st=='race'){c.fl=2.6;sfx('final')}if(c.lap>G.laps&&!c.fin){c.fin=++G.fc;if(c.hu!=null)sfx('finish')}}
+ if(c.z>=L){c.z-=L;if(c.hu==null){if(!c.pl&&c.bu>5)c.fpl=c.bu;c.bu=0;c.pl=0}if(c.hu==0&&!c.fin&&G.st=='race'){if(c.lap>1)recLap(G.t-(c.l0||0));c.l0=G.t}c.lap++;if(c.hu!=null&&G.st=='race'&&c.lap>1&&c.lap<G.laps){c.lb=3;c.ld=c.lap-1;c.lr=G.laps-c.ld}if(c.hu!=null&&G.laps>1&&c.lap==G.laps&&G.st=='race'){c.fl=2.6;sfx('final')}if(c.lap>G.laps&&!c.fin){c.fin=++G.fc;c.ft=nowT();if(c.hu!=null)sfx('finish')}}
  if((hum&&G.st=='race'||c.wp)&&inPit&&sg.bay&&!c.px&&c.fuel<99){c.pm=1;c.pt=0;c.pu=u;c.sp=0;c.pl=1}
  if(!(inPit&&sg.bay))c.px=0}
 function recLap(lt){if(!USER||!(lt>5))return;const r=USER.rec||(USER.rec={}),k=TK.n;if(!(r[k]<=lt)){r[k]=+lt.toFixed(2);saveDB()}}
 const fmtT=t=>t>0?(t/60|0)+"'"+('0'+(t%60|0)).slice(-2)+'"'+('0'+(t%1*100|0)).slice(-2):"-'--\"--";
-const sc=c=>c.fin?1e9-c.fin:(c.lap-1)*L+c.z;
+const nowT=()=>ON&&ON.f&&ON.f.srv?ON.f.srv():Date.now();
+// orden de llegada por hora real (reloj del servidor) de cruce de meta, igual en todos los clientes
+const sc=c=>c.fin?1e15-(c.ft||c.fin):(c.lap-1)*L+c.z;
 function rank(){G.ord=[...G.cars].sort((a,b)=>sc(b)-sc(a));G.ord.forEach((c,i)=>c.pos=i+1)}
 // ---------- ESTADOS ----------
 const M={s:'mode',pl:1,pk:[0,1],t:0,df:1,mi:0,cup:0};
@@ -777,7 +779,7 @@ function onlHud(){const o=ON;let n=window._onlN!=null&&!window._presErr?window._
 function onlKick(){window._kick={m:'EXPULSADO POR INACTIVIDAD · UN BOT TOMA TU LUGAR',u:performance.now()+9000};cupQuit()}
 function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.1)return;o.sa=0;
  const c=G.cars.find(c=>c.hu==0);if(!c)return;
- o.f.send(o.key,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),t:o.f.srv()})}
+ o.f.send(o.key,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,ft:c.fin?(c.ft||0):0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),t:o.f.srv()})}
 // coche de otro jugador: sigue sus datos de red; si deja de enviar durante 5 s pasa a ser un bot
 function rmUpd(c,dt){const o=ON,now=performance.now()/1000,n=o&&o.net[c.uid],last=n?n.rt:(o?o.goAt:0);
  if(!o||now-last>5||(n&&n.gone)){c.rm=0;c.nm=(c.nm||'CPU')+' (BOT)';return upd(c,dt)}
@@ -785,7 +787,7 @@ function rmUpd(c,dt){const o=ON,now=performance.now()/1000,n=o&&o.net[c.uid],las
  const age=Math.min(.6,Math.max(0,(o.f.srv()-n.t)/1000)),Dt=(n.lap-1)*L+n.z+n.sp*(age+now-n.rt);
  let D=(c.lap-1)*L+c.z+c.sp*dt;const e=Dt-D;D+=Math.abs(e)>L*.4?e:e*Math.min(1,dt*8);
  c.lap=Math.floor(D/L)+1;c.z=D-(c.lap-1)*L;c.sp=n.sp;c.x+=(n.x-c.x)*Math.min(1,dt*10);c.sl=n.sl;c.br=n.br?1:0;c.nt=n.nt?1:0;
- if(n.fin&&!c.fin)c.fin=++G.fc}
+ if(n.fin&&!c.fin){c.fin=++G.fc;c.ft=n.ft||nowT()}}
 function onlUI(){const o=ON;tx('MULTIJUGADOR ONLINE',128,28,'#ffd23a',14,'c');tx('COPA COMPLETA · '+TR.length+' CARRERAS',128,40,'#7df',7,'c');
  if(!o||!o.joined){tx(o&&o.err?o.err:'CONECTANDO CON EL SERVIDOR...',128,100,o&&o.err?'#ff7a7a':'#fff',o&&o.err&&o.err.length>34?6:8,'c');btn(o&&o.err?'VOLVER':'CANCELAR',88,190,80,20,onlCancel,1);return}
  const lob=o.lob&&o.lob.rid==o.rid?o.lob:{startAt:0,players:{}},now=o.f.srv(),
