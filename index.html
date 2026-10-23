@@ -772,7 +772,7 @@ function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
   if(left<=0){const T=o.nextAt;CUP.r++;CUP.pg=0;onlRace(o,T)}}}
 // jugador inactivo: 4 min después de que termine el primer humano sigue sin acabar -> sale al menú y los demás lo ven como bot
 function onlCount(){const o=ON;if(window._onlN!=null&&!window._presErr)return window._onlN;return o&&o.live?1+Object.keys(o.net).length:o&&o.lob&&o.lob.players?Object.keys(o.lob.players).length:null}
-function onlHud(){const o=ON,g=window._onlN!=null&&!window._presErr?window._onlN:null;if(o&&o.joined&&!o.live){const l=o.lob&&o.lob.players?Object.keys(o.lob.players).length:1;tx('EN EL LOBBY: '+l+(g!=null?' · '+g+' ONLINE':''),W/2,10,'#7f7',7,'c')}else if(g!=null)tx('● '+g+' ONLINE',W/2,11,'#7f7',8,'c');else if(USER)tx(window._presErr?'ONLINE: ERROR '+String(window._presErr).toUpperCase().slice(0,30):'ONLINE: CONECTANDO...',W/2,11,window._presErr?'#ff7a7a':'#aaa',6,'c')}
+function onlHud(){const o=ON;let n=window._onlN!=null&&!window._presErr?window._onlN:null;if(n==null&&o&&o.joined&&!o.live&&o.lob&&o.lob.players)n=Object.keys(o.lob.players).length;if(n!=null)tx(n+(n==1?' jugador online':' jugadores online'),W/2,11,'#7f7',8,'c');else if(USER&&window._presErr)tx('ONLINE: ERROR '+String(window._presErr).toUpperCase().slice(0,30),W/2,11,'#ff7a7a',6,'c')}
 function onlKick(){window._kick={m:'EXPULSADO POR INACTIVIDAD · UN BOT TOMA TU LUGAR',u:performance.now()+9000};cupQuit()}
 function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.1)return;o.sa=0;
  const c=G.cars.find(c=>c.hu==0);if(!c)return;
@@ -893,7 +893,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,signInAnonymously} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,runTransaction} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getAnalytics,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
-import {getDatabase,ref as rref,set as rset,onValue,onChildAdded,onChildChanged,onChildRemoved,runTransaction as rtx,onDisconnect,remove as rremove} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+import {getDatabase,ref as rref,set as rset,onValue,onChildAdded,onChildChanged,onChildRemoved,runTransaction as rtx,get as rget,onDisconnect,remove as rremove} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 // URL de tu Realtime Database (cópiala de Firebase > Realtime Database si es distinta)
 const RTDB_URL="https://turbo-gear-3496e-default-rtdb.firebaseio.com";
 const firebaseConfig={apiKey:"AIzaSyA4lJdkEG5QZCY0jrMQyOPEyJNdJnNUPrM",authDomain:"turbo-gear-3496e.firebaseapp.com",projectId:"turbo-gear-3496e",storageBucket:"turbo-gear-3496e.firebasestorage.app",messagingSenderId:"429165957707",appId:"1:429165957707:web:6d8739ae4adb8c3d7473ce",measurementId:"G-W0024DLN39"};
@@ -932,7 +932,7 @@ try{
     cur.startAt=now+waitMs;delete cur.votes;cur.rounds=(cur.rounds||0)+1;return cur},{applyLocally:false})},
   // presencia: cuenta de jugadores online (requiere la regla 'presence', ver README)
   async pres(pid,on){try{await ready();const r=rref(rt,'presence/'+pid);if(on){dPres=onDisconnect(r);dPres.remove().catch(()=>{});await rset(r,srv());window._presErr=0}else{if(dPres){dPres.cancel().catch(()=>{});dPres=null}await rremove(r)}}catch(e){window._presErr=(e&&(e.code||e.message))||1}},
-  watchPresence(cb){let un=null,dead=0;const go=async()=>{try{await ready();if(dead)return;un=onValue(rref(rt,'presence'),s=>{window._presErr=0;cb(s.numChildren())},e=>{window._presErr=(e&&(e.code||e.message))||1;un=null;setTimeout(go,8000)})}catch(e){window._presErr=1;setTimeout(go,8000)}};go();return()=>{dead=1;un&&un()}},
+  watchPresence(cb){let un=null,dead=0,got=0;const ok=n=>{got=1;window._presErr=0;cb(n)};const go=async()=>{try{await ready();if(dead)return;un=onValue(rref(rt,'presence'),s=>ok(s.numChildren()),e=>{window._presErr=(e&&(e.code||e.message))||1;un=null;setTimeout(go,8000)})}catch(e){window._presErr=1;setTimeout(go,8000)}};const poll=async()=>{if(dead)return;try{await ready();const s=await Promise.race([rget(rref(rt,'presence')),new Promise((_,j)=>setTimeout(()=>j(new Error('SIN RESPUESTA')),9000))]);ok(s.numChildren())}catch(e){if(!got)window._presErr=(e&&(e.code||e.message))||1}};go();poll();const t=setInterval(poll,10000);return()=>{dead=1;clearInterval(t);un&&un()}},
   watchLobby(cb){return onValue(rref(rt,'lobby/current'),s=>cb(s.val()))},
   watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h,e=>{window._onlErr=e&&(e.code||e.message)||'error'}),b=onChildChanged(r,h),c=onChildRemoved(r,s=>cb(s.key,null));return()=>{a();b();c()}},
   armSt(rid,pid){dSt=onDisconnect(rref(rt,'races/'+rid+'/st/'+pid));dSt.remove().catch(()=>{})},
