@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Turbo Gear - Super Racing 16-bit</title>
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Turbo Gear - Super Racing 16-bit</title>
 <style>
 :root{--b:clamp(54px,18vh,84px)}
 html,body{margin:0;height:100%;background:#000;color:#ccc;font:13px monospace;text-align:center;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
@@ -698,12 +698,12 @@ function ui(){if(M.s=='tr'){X.globalCompositeOperation='saturation';X.fillStyle=
   btn('ATRÁS',20,202,70,16,()=>{M.s=M.pl==2?'c1':'c0'});btn('¡CORRER!',106,202,130,16,startRace,1)}
  tx('También: ENTER / ESC / flechas',128,221,'#888',6,'c');X.restore()}
 function render(){BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
- if(G.st=='menu'){view(G.cars[0],0,0,W,H);ui();onlHud();if(window._kick&&performance.now()<window._kick.u)tx(window._kick.m,W/2,26,'#ff7a7a',8,'c')}
+ if(G.st=='menu'){view(G.cars[0],0,0,W,H);ui();onlHud();tx('v10',W-4,H-4,'#556',6,'r');if(window._kick&&performance.now()<window._kick.u)tx(window._kick.m,W/2,26,'#ff7a7a',8,'c')}
  else{const hs=G.cars.filter(c=>c.hu!=null);
   if(hs.length==1)carView(hs[0],0,0,W,H);else{const w2=W>>1;carView(hs[0],0,0,w2-1,H);carView(hs[1],w2+1,0,W-w2-1,H);X.fillStyle='#000';X.fillRect(w2-1,0,2,H)}
   if(G.st=='race'&&G.cd>0)tx(G.cd>.5?''+Math.ceil(G.cd-.5):'¡YA!',W/2,H/2+10,'#ffd23a',40,'c');
   if(CUP&&G.st=='race'&&G.t<4)tx('COPA · CARRERA '+(CUP.r+1)+'/'+TR.length+' · '+TR[CUP.r].n,W/2,H/2-40,'#fff',9,'c');
-  if(ON&&ON.live&&G.st=='race'){const k=G.cars.filter(c=>c.rm).length,nn=Object.keys(ON.net).length;tx(window._onlErr?'RED: '+window._onlErr:(k+1)+(k?' jugadores online':' jugador online'),W/2,26,window._onlErr?'#ff7a7a':'#7f7',7,'c')}
+  if(ON&&ON.live&&G.st=='race'){const k=G.cars.filter(c=>c.rm).length,nn=Object.keys(ON.net).length;tx(window._onlErr?'RED: '+window._onlErr:(k+1)+(k?' jugadores online':' jugador online'),6,Math.round(H*.68),window._onlErr?'#ff7a7a':'#7f7',7)}
   if(ON&&ON.live&&G.st=='race'&&G.cars.some(c=>c.hu==0&&c.fin)){const w=G.cars.filter(c=>c.rm&&!c.fin).map(c=>c.nm);if(w.length){tx('¡HAS TERMINADO! ESPERANDO A LOS RIVALES',W/2,H/2-30,'#ffd23a',10,'c');tx(w.slice(0,4).join(' · ')+(w.length>4?' +'+(w.length-4):''),W/2,H/2-16,'#fff',8,'c')}}
   if(G.st=='res'){X.fillStyle='rgba(0,0,0,.98)';X.fillRect(0,0,W,H);X.save();X.translate(OX,OY);if(CUP){cupRes();X.restore()}else{tx('RESULTADOS',128,20,'#ffd23a',16,'c');tx('DIFICULTAD: '+DFN[M.df],128,32,'#7df',7,'c');
    G.ord.forEach((c,i)=>{const y=51+i*14.5;X.fillStyle=c.def.c;X.fillRect(40,y-8,14,8);tx((i+1)+'. '+(c.nm||(c.hu!=null?(c.hu==0&&USER?USER.id:'JUGADOR '+(c.hu+1)):'CPU'))+' - '+c.def.n,62,y,c.hu!=null||c.rm?'#7df':'#fff',9)});
