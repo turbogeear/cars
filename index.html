@@ -282,40 +282,59 @@ const YS=5,YN=72,SS=2,SW=100,SH=60,AX=50,AY=48,MXY=15,PC=Math.cos(.2),PS=Math.si
 const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),
  pk32=(h,s)=>{const q=rgb(h).map(v=>Math.max(0,Math.min(255,Math.round(s<=1?v*s:v+(255-v)*(s-1)))));return(255<<24|q[2]<<16|q[1]<<8|q[0])>>>0};
 // modelo: cajas ahusadas + cilindros (x ancho, y alto, z largo; morro en +z)
+const NZ=[9,11,11.5,8.5];   // altura del morro de cada coche (para los faros)
 function mdl(d,br){const key=CARS.indexOf(d)+(br?9:0);if(MD[key])return MD[key];
- const Q=[],c0=d.c,c1=d.d,ac=d.s,GL='#0f1830',GT='#4a6cae',BK='#101015',SV='#9aa0b0',DK='#0a0a0e',TL=br?'!#ff5a46':'!#c9141e',
+ // 4 deportivos de carrera GT: 0 cuña blanca ancha · 1 coupé rojo · 2 coupé azul con cadera ancha y cabina adelantada · 3 hiperdeportivo morado con aleta dorsal
+ const ix=Math.max(0,CARS.indexOf(d)),P=[{hw:22,fw:20.5,rf:22,cb:12,cz:0,wy:33,fin:0},{hw:21.5,fw:20,rf:23,cb:11.5,cz:0,wy:34,fin:0},{hw:23.5,fw:19.5,rf:23.5,cb:12,cz:4,wy:35.5,fin:0},{hw:21,fw:20.5,rf:19.5,cb:8.5,cz:-2,wy:31,fin:1}][ix],
+ {hw,fw,rf,cb,cz,wy,fin}=P,nz=NZ[ix];
+ const Q=[],c0=d.c,c1=d.d,ac=d.s,GL='#0f1830',GT='#4a6cae',BK='#101015',SV='#9aa0b0',DK='#0a0a0e',W='#f1f0e6',TL=br?'!#ff5a46':'!#c9141e',
  add=(V,F,C)=>Q.push({V,F,C}),
  bx=(z0,z1,a,b,C)=>{if(typeof C=='string')C=Array(6).fill(C);const r=(z,q)=>[[q[0],q[2],z],[q[1],q[2],z],[q[1],q[3],z],[q[0],q[3],z]];
   add([...r(z0,a),...r(z1,b)],[[0,1,2,3],[4,5,6,7],[0,3,7,4],[1,2,6,5],[3,2,6,7],[0,1,5,4]],C)},
  mb=(z0,z1,a,b,C)=>{bx(z0,z1,a,b,C);bx(z0,z1,[-a[1],-a[0],a[2],a[3]],[-b[1],-b[0],b[2],b[3]],C)},
- cy=(x,y,z,r,w,C)=>{const V=[],F=[],E=[],O=[],n=12;for(let i=0;i<n;i++){const a=i/n*6.2832,p=y+r*Math.sin(a),q=z+r*Math.cos(a),j=(i+1)%n;V.push([x-w,p,q],[x+w,p,q]);F.push([2*i,2*i+1,2*j+1,2*j]);E.push(2*i);O.push(2*i+1)}
-  add(V,[...F,E,O],[...Array(n).fill(C[0]),C[1],C[1]])};
- bx(-38,36,[-17,17,4,9],[-17,17,4,9],'#15161c');
- for(const s of[-1,1]){cy(s*19,7,-27,7,4.5,[BK,'#1d1d26']);cy(s*19,7,-27,3.8,5.1,[SV,'#c0c6d4']);cy(s*18,5.5,27,5.5,4,[BK,'#1d1d26']);cy(s*18,5.5,27,3,4.6,[SV,'#c0c6d4'])}
- mb(25,29,[10,14,4,5.6],[10,14,4,5.6],'#15161c');
- // carrocería: cola, centro y morro
- bx(-38,-12,[-14,14,8,17],[-14,14,8,17],[c1,c0,c0,c0,c0,BK]);
- bx(-12,10,[-14,14,8,17],[-14,14,8,15.5],[c0,c0,c0,c0,c0,BK]);
- bx(10,38,[-14,14,8,15.5],[-9,9,8,11.5],[c0,c1,c0,c0,c0,BK]);
- // franjas laterales y tomas de aire
- mb(-36,10,[14,14.5,9.8,11.2],[14,14.5,9.8,11.2],ac);mb(10,34,[14,14.5,9.8,11.2],[9.7,10.2,9.8,11.2],ac);
- mb(-6,6,[14,14.6,12.2,15],[14,14.6,12.2,15],DK);
- // franjas del capó
- for(const x of[-3.4,1.4]){bx(-38,-12,[x,x+2,16.9,17.6],[x,x+2,16.9,17.6],ac);bx(-12,10,[x,x+2,16.9,17.6],[x,x+2,15.4,16.1],ac);bx(10,36,[x,x+2,15.4,16.1],[x,x+2,11.2,11.9],ac)}
- // cabina: vidrio trasero, techo, parabrisas
- bx(-24,-12,[-10,10,15,19],[-10,10,15,24.5],[GL,c0,GL,GL,GT,c0]);
- bx(-12,0,[-10,10,15,24.5],[-10,10,15,24.5],[GL,GL,GL,GL,c0,c0]);
- bx(0,12,[-10,10,15,24.5],[-10,10,15,16.6],[GL,GL,GL,GL,GT,c0]);
- // alerón trasero
- bx(-41,-34,[-21,21,28,29.5],[-21,21,28,29.5],[c1,c0,c1,c1,c0,c1]);bx(-41,-34,[-21,21,29.5,30.1],[-21,21,29.5,30.1],ac);
- mb(-41,-33,[21,22,23,34],[21,22,23,34],c1);mb(-37.5,-35,[7.5,9,16,28],[7.5,9,16,28],'#15161c');
- // alerón delantero
- bx(33,41,[-21,21,4,6.5],[-21,21,4,6.5],[c1,c0,c1,c1,c0,c1]);mb(33,41,[21,22,3,9],[21,22,3,9],c1);
- // luces, placa, escapes, faros
- mb(-38.7,-38,[5,13,11,14],[5,13,11,14],[TL,c1,c1,c1,c1,c1]);
- bx(-38.7,-38,[-3.5,3.5,9.5,13],[-3.5,3.5,9.5,13],'#ecebdc');bx(-38.7,-38,[-4,4,14.2,15.6],[-4,4,14.2,15.6],[TL,c1,c1,c1,c1,c1]);
- mb(-41,-38,[5,9,6.5,10.5],[5,9,6.5,10.5],['#050507',SV,SV,SV,'#c6ccd8',SV]);
- mb(38,38.7,[3.5,8.5,8.4,10.8],[3.5,8.5,8.4,10.8],[c1,'!#fff3b0',c1,c1,c1,c1]);bx(38,38.4,[-3,3,8.5,10.5],[-3,3,8.5,10.5],[DK,'#0d0f15',DK,DK,DK,DK]);
+ cy=(x,y,z,r,w,C)=>{const V=[],F=[],E=[],O=[],n=14;for(let i=0;i<n;i++){const a=i/n*6.2832,p=y+r*Math.sin(a),q=z+r*Math.cos(a),j=(i+1)%n;V.push([x-w,p,q],[x+w,p,q]);F.push([2*i,2*i+1,2*j+1,2*j]);E.push(2*i);O.push(2*i+1)}
+  add(V,[...F,E,O],[...Array(14).fill(C[0]),C[1],C[1]])},
+ sx=z=>z<-14?hw:z<10?hw+(fw+1-hw)*(z+14)/24:fw+1,                      // semiancho de la carrocería en z
+ hy=z=>z<10?16.5:z<30?16.5+(nz+3-16.5)*(z-10)/20:nz+3-3*(z-30)/10,      // altura del capó en z
+ dy=z=>15+(z+40)*2/26;                                                 // altura de la cola en z
+ // suelo y ruedas (neumáticos cubiertos por los pasos de rueda)
+ bx(-40,40,[-17,17,2.5,5.5],[-17,17,2.5,5.5],DK);
+ for(const s of[-1,1]){cy(s*(hw-4.4),7.2,-26,7.2,4.6,[BK,'#1d1d26']);cy(s*(hw-4.4),7.2,-26,4.4,5.2,[SV,'#c0c6d4']);cy(s*(fw-3),6.7,27,6.7,4.2,[BK,'#1d1d26']);cy(s*(fw-3),6.7,27,4,4.8,[SV,'#c0c6d4'])}
+ // carrocería: cola ancha, puertas, capó y morro bajo
+ bx(-40,-14,[-hw+2,hw-2,5,15],[-hw,hw,5,17],[c1,c0,c0,c0,c0,BK]);
+ bx(-14,10,[-hw,hw,5,17],[-fw-1,fw+1,5,16.5],[c0,c0,c0,c0,c0,BK]);
+ bx(10,30,[-fw-1,fw+1,5,16.5],[-fw,fw,5,nz+3],[c0,c0,c0,c0,c0,BK]);
+ bx(30,40,[-fw,fw,5,nz+3],[-fw+4.5,fw-4.5,5,nz],[c0,c1,c0,c0,c0,BK]);
+ // cabina: luneta, techo, parabrisas
+ bx(-24+cz,-12+cz,[-cb+.5,cb-.5,12,16.8],[-cb,cb,12,rf],[c1,c0,c0,c0,GL,BK]);
+ bx(-12+cz,-1+cz,[-cb,cb,12,rf],[-cb,cb,12,rf],[c0,c0,GL,GL,c0,BK]);
+ bx(-1+cz,12+cz,[-cb,cb,12,rf],[-cb-1,cb+1,12,16.8],[c0,c0,GL,GL,GT,BK]);
+ if(!fin)bx(-9+cz,-4+cz,[-3,3,rf,rf+1.8],[-3,3,rf,rf+1.8],[c1,c1,c1,c1,DK,c1]);   // toma de aire del techo
+ // franjas de librea: capó, techo y cola
+ for(const x of[-3.6,1.1]){const z1=Math.max(14,13+cz);bx(z1,30,[x,x+2.5,hy(z1)-.3,hy(z1)+.5],[x,x+2.5,hy(30)-.3,hy(30)+.5],ac);bx(30,39,[x,x+2.5,hy(30)-.3,hy(30)+.5],[x,x+2.5,hy(39)-.3,hy(39)+.5],ac);
+  bx(-40,-25+cz,[x,x+2.5,dy(-40)-.3,dy(-40)+.5],[x,x+2.5,dy(-25+cz)-.3,dy(-25+cz)+.5],ac)}
+ bx(-12+cz,-1+cz,[-1.6,1.6,rf-.2,rf+.5],[-1.6,1.6,rf-.2,rf+.5],ac);
+ // laterales: umbral, tomas de aire, franja y dorsal
+ mb(-14,10,[sx(-14)-.1,sx(-14)+.7,4.5,6.4],[sx(10)-.1,sx(10)+.7,4.5,6.4],BK);
+ mb(-8,1,[sx(-8)-.2,sx(-8)+.5,8,14],[sx(1)-.2,sx(1)+.5,8,14],DK);
+ mb(-36,-14,[sx(-36)-.1,sx(-36)+.5,7,8.6],[sx(-14)-.1,sx(-14)+.5,7,8.6],ac);mb(-14,34,[sx(-14)-.1,sx(-14)+.5,7,8.6],[sx(34)-.1,sx(34)+.5,7,8.6],ac);
+ mb(-6,4,[sx(-6)-.1,sx(-6)+.6,9.5,14.5],[sx(4)-.1,sx(4)+.6,9.5,14.5],W);          // círculo del dorsal en la puerta
+ mb(2+cz,5+cz,[cb+3,cb+8,15.7,17.7],[cb+3,cb+8,15.7,17.7],c1);                     // retrovisores
+ if(fin){bx(-38,-6,[-1.2,1.2,15,wy-1],[-1.2,1.2,17,rf+1],[c1,c0,c0,c0,c0,c1]);bx(-38,-6,[-.4,.4,wy-1,wy+.4],[-.4,.4,rf+1,rf+1.6],ac)}   // aleta dorsal (hiperdeportivo)
+ // alerón trasero GT con placas laterales
+ bx(-44,-35,[-25,25,wy,wy+1.4],[-25,25,wy,wy+1.4],[c1,c1,c1,c1,c0,BK]);bx(-37.2,-35,[-25,25,wy+1.4,wy+2.2],[-25,25,wy+1.4,wy+2.2],ac);
+ mb(-44,-35,[25,26.2,wy-3,wy+4],[25,26.2,wy-3,wy+4],c1);
+ mb(-40,-37,[9,10.8,15,wy],[9,10.8,15,wy],'#15161c');
+ // difusor trasero con aletas, luces, placa y escapes
+ bx(-44,-38,[-14,14,2.5,5.5],[-14,14,2.5,8.5],[BK,BK,BK,BK,'#1a1a22',BK]);for(const x of[-9,-.4,8.2])bx(-44,-38,[x,x+.8,2.5,5.5],[x,x+.8,2.5,8.5],c1);
+ bx(-40.7,-40,[-hw+4,hw-4,11,12.8],[-hw+4,hw-4,11,12.8],[TL,c1,c1,c1,c1,c1]);
+ mb(-40.7,-40,[hw-8,hw-2,8.5,14.2],[hw-8,hw-2,8.5,14.2],[TL,c1,c1,c1,c1,c1]);
+ bx(-40.7,-40,[-4.5,4.5,6.4,9.8],[-4.5,4.5,6.4,9.8],W);
+ mb(-43.5,-40,[6.2,9.6,8.4,11.6],[6.2,9.6,8.4,11.6],['#050507',SV,SV,SV,'#c6ccd8',SV]);
+ // splitter delantero, faros en tira y toma de aire
+ bx(34,44,[-fw-1,fw+1,2.5,4.2],[-fw-1,fw+1,2.5,4.2],[c1,c1,c1,c1,c1,BK]);mb(34,44,[fw+1,fw+2.2,2.5,8],[fw+1,fw+2.2,2.5,8],c1);
+ mb(39.6,40.4,[5.5,15,nz-3.6,nz-1],[5.5,15,nz-3.6,nz-1],[c1,'!#fff3b0',c1,c1,c1,c1]);
+ bx(39.6,40.4,[-9,9,5.4,7.6],[-9,9,5.4,7.6],[DK,'#0d0f15',DK,DK,DK,DK]);
  return MD[key]=Q}
 function tri(a,b,c,col,id){const ar=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);if(!ar)return;
  const x0=Math.max(0,Math.floor(Math.min(a[0],b[0],c[0]))),x1=Math.min(PW-1,Math.ceil(Math.max(a[0],b[0],c[0]))),y0=Math.max(0,Math.floor(Math.min(a[1],b[1],c[1]))),y1=Math.min(PH-1,Math.ceil(Math.max(a[1],b[1],c[1])));
@@ -341,12 +360,12 @@ function carS(cx,b,k,c,tn){
  const sp=Math.min(1,.25+(c.sp||0)/(c.max||1)*2),dg=c.ya!=null?c.ya:Math.max(-1,Math.min(1,(c.sl||0)*sp))*MXY,
   ai=((Math.round(dg/YS)%YN)+YN)%YN,th=ai*YS*Math.PI/180,cs=Math.cos(th),sn=Math.sin(th),by=b-5*k,
   pj=(x,y,z)=>{const Z=-x*sn+z*cs;return[cx+(x*cs+z*sn)*k,by-(y*PC+Z*PS)*k]},
-  fl=()=>{if(!(c.nt>0))return;for(const s of[-1,1]){const A=pj(s*7,8.5,-41),f=16+Math.random()*12;circ(A[0],A[1],4*k,'rgba(255,170,60,.3)');
-   [['#d83a08',1,3.2],['#ffa020',.75,2.4],['#ffd24a',.5,1.6],['#fff6c0',.3,.8]].forEach(([col,l,w])=>{const B=pj(s*7,8.5,-41-f*l),dx=B[0]-A[0],dy=B[1]-A[1],n=Math.hypot(dx,dy)||1,px=-dy/n*w*k,py=dx/n*w*k;poly(col,A[0]+px,A[1]+py,A[0]-px,A[1]-py,B[0],B[1])})}};
- c.th=th;c.tc=dg*Math.PI/180;X.fillStyle='rgba(0,0,0,.3)';X.beginPath();[[-20,-42],[20,-42],[20,42],[-20,42]].forEach(([x,z],i)=>{const q=pj(x,0,z);i?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1])});X.fill();
+  fl=()=>{if(!(c.nt>0))return;for(const s of[-1,1]){const A=pj(s*7.9,10,-43.6),f=16+Math.random()*12;circ(A[0],A[1],4*k,'rgba(255,170,60,.3)');
+   [['#d83a08',1,3.2],['#ffa020',.75,2.4],['#ffd24a',.5,1.6],['#fff6c0',.3,.8]].forEach(([col,l,w])=>{const B=pj(s*7.9,10,-43.6-f*l),dx=B[0]-A[0],dy=B[1]-A[1],n=Math.hypot(dx,dy)||1,px=-dy/n*w*k,py=dx/n*w*k;poly(col,A[0]+px,A[1]+py,A[0]-px,A[1]-py,B[0],B[1])})}};
+ c.th=th;c.tc=dg*Math.PI/180;X.fillStyle='rgba(0,0,0,.3)';X.beginPath();[[-25,-46],[25,-46],[25,44],[-25,44]].forEach(([x,z],i)=>{const q=pj(x,0,z);i?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1])});X.fill();
  const lg=()=>{const fa=Math.abs(cs),al=DN*fa,br=c.br?1:0;if(fa<.1)return;X.save();X.globalCompositeOperation='lighter';
   const gl=(p,r,c1)=>{const g=X.createRadialGradient(p[0],p[1],0,p[0],p[1],r);g.addColorStop(0,c1);g.addColorStop(1,c1.replace(/[\d.]+\)$/,'0)'));X.fillStyle=g;X.fillRect(p[0]-r,p[1]-r,r*2,r*2)};
-  if(cs<0)for(const s of[-1,1]){const p=pj(s*6.2,9.6,38.8);gl(p,13*k,'rgba(255,246,190,'+.9*al+')');gl(p,3.6*k,'rgba(255,255,255,'+al+')')}
+  if(cs<0)for(const s of[-1,1]){const p=pj(s*10.2,NZ[CARS.indexOf(c.def)]-2.3,40.8);gl(p,13*k,'rgba(255,246,190,'+.9*al+')');gl(p,3.6*k,'rgba(255,255,255,'+al+')')}
   X.restore()};
  X.imageSmoothingEnabled=true;X.imageSmoothingQuality='high';
  if(cs<=0)fl();X.drawImage(tnt(spr(c.def,c.br?1:0,ai),tn),cx-AX*k,by-AY*k,SW*k,SH*k);if(cs>0)fl();if(c.rm&&c.nm&&k>.05)tx(c.nm,cx,by-AY*k+SH*k*.22,'#7df',Math.max(5,Math.min(9,k*30)),'c');if(DN>.02&&c.ya==null){if(tn!=null)lg();else LGF=lg}}
