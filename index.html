@@ -322,9 +322,9 @@ function mdl(d,br){const key=CARS.indexOf(d)+(br?9:0);if(MD[key])return MD[key];
  mb(2+cz,5+cz,[cb+3,cb+8,15.7,17.7],[cb+3,cb+8,15.7,17.7],c1);                     // retrovisores
  if(fin){bx(-38,-6,[-1.2,1.2,15,wy-1],[-1.2,1.2,17,rf+1],[c1,c0,c0,c0,c0,c1]);bx(-38,-6,[-.4,.4,wy-1,wy+.4],[-.4,.4,rf+1,rf+1.6],ac)}   // aleta dorsal (hiperdeportivo)
  // alerón trasero GT con placas laterales
- bx(-44,-35,[-25,25,wy,wy+1.4],[-25,25,wy,wy+1.4],[c1,c1,c1,c1,c0,BK]);bx(-37.2,-35,[-25,25,wy+1.4,wy+2.2],[-25,25,wy+1.4,wy+2.2],ac);
+ if(ix==1||ix==3){ bx(-44,-35,[-25,25,wy,wy+1.4],[-25,25,wy,wy+1.4],[c1,c1,c1,c1,c0,BK]);bx(-37.2,-35,[-25,25,wy+1.4,wy+2.2],[-25,25,wy+1.4,wy+2.2],ac);
  mb(-44,-35,[25,26.2,wy-3,wy+4],[25,26.2,wy-3,wy+4],c1);
- mb(-40,-37,[9,10.8,15,wy],[9,10.8,15,wy],'#15161c');
+ mb(-40,-37,[9,10.8,15,wy],[9,10.8,15,wy],'#15161c');}   // sin alerón en el blanco (0) ni en el azul (2)
  // difusor trasero con aletas, luces, placa y escapes
  bx(-44,-38,[-14,14,2.5,5.5],[-14,14,2.5,8.5],[BK,BK,BK,BK,'#1a1a22',BK]);for(const x of[-9,-.4,8.2])bx(-44,-38,[x,x+.8,2.5,5.5],[x,x+.8,2.5,8.5],c1);
  bx(-40.7,-40,[-hw+4,hw-4,11,12.8],[-hw+4,hw-4,11,12.8],[TL,c1,c1,c1,c1,c1]);
