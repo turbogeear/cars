@@ -75,10 +75,10 @@ function sfx(k){try{if(!A||mute)return;if(A.state=='suspended')A.resume();const 
 // ---------- DATOS ----------
 const NC=10;
 const CARS=[
-{n:'BLANCO',s:'#c8102e',c:'#f2f2f2',d:'#b4b4c8',v:7,a:3,f:5,t:4,h:7,r:'VELOCISTA · MÁXIMA VELOCIDAD, ACELERA LENTO'},
+{n:'BLANCO',s:'#c8102e',c:'#f2f2f2',d:'#b4b4c8',v:6,a:5,f:7,t:6,h:9,r:'ESTABLE · MEJOR MANEJO, ACELERA ALGO LENTO'},
 {n:'ROJO',s:'#f2f2f2',c:'#e8202a',d:'#8e0f18',v:6,a:9,f:4,t:6,h:4,r:'EXPLOSIVO · ACELERA Y MUCHO NITRO, MANEJO DURO'},
 {n:'AZUL',s:'#ffd23a',c:'#2a62ff',d:'#17348f',v:6,a:6,f:8,t:3,h:6,r:'MARATONISTA · ECONÓMICO, POCO NITRO'},
-{n:'MORADO',s:'#33e0ff',c:'#9b3cf2',d:'#5a1c9c',v:6,a:8,f:5,t:5,h:8,r:'ÁGIL · MEJOR MANEJO, COMBUSTIBLE JUSTO'}];
+{n:'MORADO',s:'#33e0ff',c:'#9b3cf2',d:'#5a1c9c',v:6,a:8,f:5,t:5,h:7,r:'ÁGIL · ACELERA BIEN Y MANEJA BIEN, COMBUSTIBLE JUSTO'}];
 const TR=[
 {n:'COSTA OESTE',w:1.4,pa:'USA',lv:1,mh:.7,cy:1,ds:'Costa abierta: curvas suaves y rectas largas',sky:['#2c6cf0','#9fd4ff'],mt:'#5a74a8',grass:['#1aa52a','#129021'],road:['#6e6e78','#64646e'],rum:['#fff','#e02020'],tree:'#0b6b1c',sh:0,
  s:[[30,0,0],[25,2,0],[20,0,12],[25,-3,0],[25,0,-12],[30,4,0],[20,0,18],[20,0,-18],[30,-2,0],[25,3,10],[25,-4,-10],[35,0,0],[25,-3,0],[25,3,0],[25,0,20],[25,0,-20],[30,2,0]]},
@@ -742,7 +742,7 @@ function ui(){if(M.s=='tr'){X.globalCompositeOperation='saturation';X.fillStyle=
  else if(s[0]=='c'){const j=+s[1],d=CARS[M.pk[j]],pk=n=>M.pk[j]=(M.pk[j]+n+4)%4;
   tx('TURBO GEAR',128,16,'#ffd23a',12,'c');tx((M.cup?'COPA · ':'')+'JUGADOR '+(j+1)+' · ELIGE TU AUTO',128,32,'#7df',9,'c');
   carS(128,111,1.6,{def:d,nt:0,ya:T*36});btn('◄',14,68,28,30,()=>pk(-1));btn('►',214,68,28,30,()=>pk(1));tx(d.n,128,126,d.c,12,'c');if(d.r)tx(d.r,128,136,'#ccc',6,'c');
-  [['VELOCIDAD','v'],['ACELERACION','a'],['COMBUSTIBLE','f'],['NITRO','t'],['MANEJO','h']].forEach(([n,k],i)=>{tx(n,30,148+i*9,'#ccc',7);X.fillStyle='#333';X.fillRect(120,142+i*9,100,6);X.fillStyle=d.c;X.fillRect(120,142+i*9,d[k]*(k=='t'?20:10),6)});
+  [['VELOCIDAD','v'],['ACELERACION','a'],['COMBUSTIBLE','f'],['NITRO','t'],['MANEJO','h']].forEach(([n,k],i)=>{tx(n,30,148+i*9,'#ccc',7);X.fillStyle='#333';X.fillRect(120,142+i*9,100,6);X.fillStyle=d.c;X.fillRect(120,142+i*9,d[k]*(k=='t'?100/6:10),6)});
   btn('ATRÁS',20,196,70,20,()=>{M.s=j?'c0':(M.cup?'kp':'mode')});btn('ELEGIR',106,196,130,20,()=>{if(M.on)onlStart();else M.s=(j==0&&M.pl==2)?'c1':(M.cup?'kd':'tr')},1)}
  else{const trk=n=>{M.t=(M.t+n+TR.length)%TR.length;startDemo(M.t)},T0=TR[M.t];
   const box=(x,y,w,h,t)=>{X.fillStyle='rgba(0,0,30,.5)';X.fillRect(x,y,w,h);X.font='bold 8px monospace';const tw=X.measureText(t).width+8,t0=x+(w-tw)/2;X.strokeStyle='#2626e6';X.lineWidth=3;X.lineJoin='miter';X.beginPath();X.moveTo(t0,y);X.lineTo(x,y);X.lineTo(x,y+h);X.lineTo(x+w,y+h);X.lineTo(x+w,y);X.lineTo(t0+tw,y);X.stroke();tx(t,x+w/2,y+3,'#fff',8,'c')};
