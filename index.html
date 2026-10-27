@@ -128,7 +128,7 @@ const DFN=['FÁCIL','INTERMEDIO','AVANZADO'],DFD=['Rivales lentos y con poco nit
 DFS=[{sk:.72,sr:.07,nit:-2,np:.012,cv:.1,la:900},{sk:.9,sr:.08,nit:0,np:.04,cv:.05,la:1500},{sk:.985,sr:.05,nit:1,np:.11,cv:.015,la:2300}];
 function mkCar(d,hu,s,df=1){const F=DFS[df];const m=7500+d.v*480;return{def:d,hu,max:m,acc:m/(14-d.a),burn:100/(60+d.f*8),hd:.8+d.h*.05,fuel:100,nit:hu==null?Math.max(0,d.t+F.nit):d.t,df,nt:0,z:(34-s*2.5)*SL,x:s%2?.5:-.5,sp:0,lap:1,fin:0,bg:0,sk:F.sk+Math.random()*F.sr,ln:Math.random()*1.2-.6,pos:1}}
 const gp=(c,o)=>{let g=((o.z-c.z)%L+L)%L;return g>L/2?g-L:g};
-function upd(c,dt){if(c.rm){rmUpd(c,dt);return}
+function upd(c,dt){if(c.rm){rmUpd(c,dt);return}if(c.hu==null&&ON&&ON.live&&botMir(c,dt))return;
  const sg=SEG[c.z/SL|0],hum=c.hu!=null&&!c.fin;let l=0,u=0,d=0,nt=0,tl=0;
  if(hum){const k=KM[c.hu];l=(K[k.r]?1:0)-(K[k.l]?1:0);u=K[k.u];d=K[k.d];nt=hit(...k.n);const pd=(navigator.getGamepads?navigator.getGamepads():[])[c.hu];if(pd){const ax=pd.axes[0]||0,b=i=>pd.buttons[i]&&pd.buttons[i].pressed;if(Math.abs(ax)>.2)l=ax;if(b(15))l=1;if(b(14))l=-1;if(b(7)||b(0))u=1;if(b(6)||b(1))d=1;const n=b(2)||b(3);if(n&&!c.gn)nt=1;c.gn=n}}
  else{u=c.sp<c.max*c.sk*(1-Math.abs(sg.cv)*DFS[c.df].cv)?1:0;if(c.nit&&c.nt<=0&&Math.abs(sg.cv)<1.5&&Math.random()<dt*DFS[c.df].np)nt=1}
@@ -160,10 +160,10 @@ function upd(c,dt){if(c.rm){rmUpd(c,dt);return}
   if(g>0){if(c.sp>o.sp){const dv=c.sp-o.sp,av=(c.sp+o.sp)/2,E=.4;
     if(c.hu!=null&&dv>400&&T-(c.ct||0)>.6){c.ct=T;sfx('crash')}
     c.sp=av-E*dv/2;
-    if(!o.rm){o.sp=av+E*dv/2;o.bt=T;if(o.hu!=null&&dv>400&&T-(o.ct||0)>.6){o.ct=T;sfx('crash')}}}
+    if(!(o.rm||o.bm)){o.sp=av+E*dv/2;o.bt=T;if(o.hu!=null&&dv>400&&T-(o.ct||0)>.6){o.ct=T;sfx('crash')}}}
    c.x+=(c.x>=o.x?1:-1)*dt*1.5/(TK.w||1)}
   // un jugador online (remoto) me golpea por detrás: su cliente lo frena, el mío me empuja a mí
-  else if(o.rm&&o.sp>c.sp&&T-(c.bt||0)>.5){const dv=o.sp-c.sp;c.bt=T;c.sp=Math.min(o.sp,(o.sp+c.sp)/2+.2*dv);if(c.hu!=null&&dv>400&&T-(c.ct||0)>.6){c.ct=T;sfx('crash')}c.x+=(c.x>=o.x?1:-1)*dt*.8/(TK.w||1)}}}
+  else if((o.rm||o.bm)&&o.sp>c.sp&&T-(c.bt||0)>.5){const dv=o.sp-c.sp;c.bt=T;c.sp=Math.min(o.sp,(o.sp+c.sp)/2+.2*dv);if(c.hu!=null&&dv>400&&T-(c.ct||0)>.6){c.ct=T;sfx('crash')}c.x+=(c.x>=o.x?1:-1)*dt*.8/(TK.w||1)}}}
  c.bg+=sg.cv*pr*dt*40;
  c.z+=c.sp*dt;
  if(c.z>=L){c.z-=L;if(c.hu==null){if(!c.pl&&c.bu>5)c.fpl=c.bu;c.bu=0;c.pl=0}if(c.hu==0&&!c.fin&&G.st=='race'){if(c.lap>1)recLap(G.t-(c.l0||0));c.l0=G.t}c.lap++;if(c.hu!=null&&G.st=='race'&&c.lap>1&&c.lap<G.laps){c.lb=3;c.ld=c.lap-1;c.lr=G.laps-c.ld}if(c.hu!=null&&G.laps>1&&c.lap==G.laps&&G.st=='race'){c.fl=2.6;sfx('final')}if(c.lap>G.laps&&!c.fin){c.fin=++G.fc;c.ft=nowT()-Math.min(200,Math.max(0,c.z/Math.max(c.sp,1)*1000));if(c.hu!=null)sfx('finish')}}
@@ -826,7 +826,7 @@ function onlRace(o,T){pauseReset();sfx('ign');try{plNext()}catch(e){}
   c.id=s;cs.push(c)}
  const late=Math.max(0,(o.f.srv()-T)/1000);
  G={st:'race',cars:cs,cd:Math.max(.5,3.5-late),t:0,laps:o.laps,fc:0,e:0,w:0};rank();
- o.key=o.rid+'_r'+CUP.r;o.net={};o.goAt=performance.now()/1000+G.cd;o.live=1;o.sa=0;o.nextAt=null;o.nreq=0;o.endT=null;o.ro=0;
+ o.key=o.rid+'_r'+CUP.r;o.net={};o.goAt=performance.now()/1000+G.cd;o.live=1;o.sa=0;o.nextAt=null;o.nreq=0;o.endT=null;o.ro=0;o.xf=0;
  o.unw=o.f.watchRace(o.key,(pid,v)=>{if(ON!==o||pid==o.pid)return;if(v)o.net[pid]=Object.assign({},v,{rt:performance.now()/1000});else o.net[pid]={gone:1,rt:0}});
  o.f.armSt(o.key,o.pid)}
 // Entre carreras: todos acuerdan (hora de servidor) cuándo empieza la siguiente
@@ -841,17 +841,27 @@ function onlCupTick(){const o=ON;if(!o||!o.live||!CUP||!CUP.onl)return;
 function onlCount(){const o=ON;if(window._onlN!=null&&!window._presErr)return window._onlN;return o&&o.live?1+Object.keys(o.net).length:o&&o.lob&&o.lob.players?Object.keys(o.lob.players).length:null}
 function onlHud(){const o=ON;let n=window._onlN!=null&&!window._presErr?window._onlN:null;if(n==null&&o&&o.joined&&!o.live&&o.lob&&o.lob.players)n=Object.keys(o.lob.players).length;if(n!=null)tx(n+(n==1?' jugador online':' jugadores online'),8,11,'#7f7',8);else if(USER&&window._presErr)tx('ONLINE: ERROR '+String(window._presErr).toUpperCase().slice(0,30),8,11,'#ff7a7a',6)}
 function onlKick(){window._kick={m:'EXPULSADO POR INACTIVIDAD · UN BOT TOMA TU LUGAR',u:performance.now()+9000};cupQuit()}
-function onlSend(dt){const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.1)return;o.sa=0;
+function onlSend(dt){let bt;const o=ON;if(!o||!o.live||G.st=='menu')return;o.sa+=dt;if(o.sa<.066)return;o.sa=0;
  const c=G.cars.find(c=>c.hu==0);if(!c)return;
- o.f.send(o.key,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,ft:c.fin?(c.ft||0):0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),pn:PZ.pn|0,rd:PZ.rdt||0,t:o.f.srv(),...(o.ro?{ro:o.ro}:{})})}
+ o.f.send(o.key,o.pid,{z:+c.z.toFixed(1),x:+c.x.toFixed(3),sp:Math.round(c.sp),lap:c.lap,fin:c.fin?1:0,ft:c.fin?(c.ft||0):0,nt:c.nt>0?1:0,br:c.br?1:0,sl:+(c.sl||0).toFixed(2),pn:PZ.pn|0,rd:PZ.rdt||0,t:o.f.srv(),...(o.noEx?{}:{...(o.ro?{ro:o.ro}:{}),...((bt=botPack())?{bt}:{})})})
+ // si la base de datos rechaza los campos extra (ro/bt), se dejan de enviar y cada cliente simula los bots por su cuenta
+ const sf=window._sf|0;if(o.lx&&sf>o.lsf){if(++o.xf>=2)o.noEx=1}else if(o.lx)o.xf=0;o.lsf=sf;o.lx=!o.noEx&&!!(o.ro||bt)}
+// coche de otro jugador: sigue sus datos de red; si deja de enviar durante 5 s pasa a ser un bot
+function netFollow(c,dt,n){const o=ON,age=Math.min(.8,Math.max(0,(o.f.srv()-n.t)/1000)),Dt=(n.lap-1)*L+n.z+n.sp*age;
+ let D=(c.lap-1)*L+c.z+c.sp*dt;const e=Dt-D;D+=Math.abs(e)>L*.4?e:e*Math.min(1,dt*10);
+ c.lap=Math.floor(D/L)+1;c.z=D-(c.lap-1)*L;c.sp=n.sp;c.x+=(n.x-c.x)*Math.min(1,dt*12);c.sl=n.sl;c.br=n.br?1:0;c.nt=n.nt?1:0;
+ if(n.fin&&!c.fin){c.fin=++G.fc;c.ft=n.ft||nowT()}}
 // coche de otro jugador: sigue sus datos de red; si deja de enviar durante 5 s pasa a ser un bot
 function rmUpd(c,dt){const o=ON,now=performance.now()/1000,n=o&&o.net[c.uid],last=n?n.rt:(o?o.goAt:0);
  if(!o||now-last>5||(n&&n.gone)){c.rm=0;c.nm=(c.nm||'CPU')+' (BOT)';return upd(c,dt)}
- if(!n)return;
- const age=Math.min(.6,Math.max(0,(o.f.srv()-n.t)/1000)),Dt=(n.lap-1)*L+n.z+n.sp*(age+now-n.rt);
- let D=(c.lap-1)*L+c.z+c.sp*dt;const e=Dt-D;D+=Math.abs(e)>L*.4?e:e*Math.min(1,dt*8);
- c.lap=Math.floor(D/L)+1;c.z=D-(c.lap-1)*L;c.sp=n.sp;c.x+=(n.x-c.x)*Math.min(1,dt*10);c.sl=n.sl;c.br=n.br?1:0;c.nt=n.nt?1:0;
- if(n.fin&&!c.fin){c.fin=++G.fc;c.ft=n.ft||nowT()}}
+ if(!n)return;netFollow(c,dt,n)}
+// los bots los simula UN solo cliente (el líder) y los demás los copian, así todos ven los mismos coches en el mismo sitio
+function botMir(c,dt){const o=ON;c.bm=0;if(!o||!o.live||!CUP||!CUP.onl||G.cd>0)return false;const I=CUP.onl,ld=onlLeader();if(ld==I.me)return false;
+ const n=o.net[I.pid[ld]];if(!n||!n.bt||performance.now()/1000-n.rt>2)return false;
+ if(!n._bp){n._bp={};for(const t of String(n.bt).split('|')){const a=t.split(',');if(a.length<9)continue;n._bp[a[0]]={z:+a[1],x:+a[2],sp:+a[3],lap:+a[4],sl:+a[5],br:+a[6],nt:+a[7],fin:+a[8]>0?1:0,ft:+a[8]}}}
+ const e=n._bp[c.id];if(!e)return false;
+ c.bm=1;netFollow(c,dt,Object.assign({t:n.t},e));return true}
+function botPack(){if(!CUP||!CUP.onl||onlLeader()!=CUP.onl.me)return'';return G.cars.filter(c=>c.hu==null&&!c.rm).map(c=>[c.id,c.z.toFixed(1),c.x.toFixed(3),Math.round(c.sp),c.lap,(c.sl||0).toFixed(2),c.br?1:0,c.nt>0?1:0,c.fin?(c.ft||1).toFixed(1):0].join(',')).join('|')}
 function onlUI(){const o=ON;tx('MULTIJUGADOR ONLINE',128,28,'#ffd23a',14,'c');tx('COPA COMPLETA · '+TR.length+' CARRERAS',128,40,'#7df',7,'c');
  if(!o||!o.joined){tx(o&&o.err?o.err:'CONECTANDO CON EL SERVIDOR...',128,100,o&&o.err?'#ff7a7a':'#fff',o&&o.err&&o.err.length>34?6:8,'c');btn(o&&o.err?'VOLVER':'CANCELAR',88,190,80,20,onlCancel,1);return}
  const lob=o.lob&&o.lob.rid==o.rid?o.lob:{startAt:0,players:{}},now=o.f.srv(),
@@ -953,7 +963,7 @@ document.querySelectorAll('#tc [data-k]').forEach(b=>{const k=b.dataset.k,up=()=
  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();K[k]=1;P[k]=1;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
  ['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,up))});
 let last=performance.now(),acc=0;
-let qn=0;function loop(t){const fd=t-last;if(fd>0&&fd<250){FEMA+=(fd-FEMA)*.1;if(++qn>45&&FEMA>24&&QL>.5){QL=Math.max(.5,QL*.8);qn=0;FEMA=16.7;fit()}}acc+=Math.min(.05,fd/1000);last=t;while(acc>=1/60){if(innerWidth>=innerHeight)step(1/60);acc-=1/60}render();requestAnimationFrame(loop)}
+let qn=0;function loop(t){const fd=t-last;if(fd>0&&fd<250){FEMA+=(fd-FEMA)*.1;if(++qn>45&&FEMA>24&&QL>.5){QL=Math.max(.5,QL*.8);qn=0;FEMA=16.7;fit()}}acc+=Math.min(ON&&ON.live?.1:.05,fd/1000);last=t;while(acc>=1/60){if(innerWidth>=innerHeight)step(1/60);acc-=1/60}render();requestAnimationFrame(loop)}
 function fit(){const iw=innerWidth,ih=innerHeight;W=Math.max(256,Math.min(600,Math.round(224*iw/ih)));H=224;const k=Math.min(iw/W,ih/H),dpr=Math.min(2,window.devicePixelRatio||1),cap=matchMedia('(pointer:coarse)').matches?2:4;RS=Math.max(1,Math.min(cap,Math.ceil(k*dpr-.01))*QL);const cw=Math.round(W*RS),ch=Math.round(H*RS);if(cv.width!=cw)cv.width=cw;if(cv.height!=ch)cv.height=ch;cv.style.width=Math.floor(W*k)+'px';cv.style.height=Math.floor(H*k)+'px';layBtns()}
 // Coloca los botones superiores sin tapar el HUD (POS/COMBUSTIBLE a la izquierda, VUELTA/KM/H a la derecha)
 function layBtns(){try{const r=cv.getBoundingClientRect(),k=r.height/224,bl=r.left,br=innerWidth-r.right,
@@ -1018,7 +1028,7 @@ try{
   watchLobby(cb){return onValue(rref(rt,'lobby/current'),s=>cb(s.val()))},
   watchRace(rid,cb){const r=rref(rt,'races/'+rid+'/st'),h=s=>cb(s.key,s.val()),a=onChildAdded(r,h,e=>{window._onlErr=e&&(e.code||e.message)||'error'}),b=onChildChanged(r,h),c=onChildRemoved(r,s=>cb(s.key,null));return()=>{a();b();c()}},
   armSt(rid,pid){dSt=onDisconnect(rref(rt,'races/'+rid+'/st/'+pid));dSt.remove().catch(()=>{})},
-  send(rid,pid,v){rset(rref(rt,'races/'+rid+'/st/'+pid),v).catch(e=>{window._onlErr=e&&(e.code||e.message)||'error'})},
+  send(rid,pid,v){rset(rref(rt,'races/'+rid+'/st/'+pid),v).catch(e=>{window._sf=(window._sf|0)+1;window._onlErr=e&&(e.code||e.message)||'error'})},
   cancelDisc(){if(dLobby){dLobby.cancel().catch(()=>{});dLobby=null}},
   async stop(rid,pid,phase){
    if(phase=='lobby'){online.cancelDisc();await rtx(rref(rt,'lobby/current'),cur=>{if(cur&&cur.players&&cur.players[pid]){delete cur.players[pid];if(cur.votes)delete cur.votes[pid];return Object.keys(cur.players).length?cur:null}return cur},{applyLocally:false})}
