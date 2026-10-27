@@ -752,10 +752,10 @@ function btn(t,x,y,w,h,fn,sel){BT.push({x:x+OX,y:y+OY,w,h,fn});X.fillStyle=sel?'
 function ui(){if(M.s=='tr'){X.globalCompositeOperation='saturation';X.fillStyle='#000';X.fillRect(0,0,W,H);X.globalCompositeOperation='source-over';X.fillStyle='rgba(0,0,0,.2)'}else X.fillStyle='rgba(0,0,0,.55)';X.fillRect(0,0,W,H);X.save();X.translate(OX,OY);const s=M.s;
  if(s=='onl')onlUI();
  else if(s=='ctl')ctlUI();
- else if(s=='mode'){tx('TURBO GEAR',128,52,'#ffd23a',24,'c');tx('SUPER RACING 16-BIT',128,68,'#fff',9,'c');if(USER){tx('PILOTO: '+USER.id.toUpperCase()+(USER.country?' ['+USER.country+']':'')+' · VICTORIAS: '+(USER.wins||0)+' · COPAS: '+(USER.cups||0),128,82,'#7df',7,'c');btn('SALIR',198,4,54,16,logout)}
+ else if(s=='mode'){tx('TURBO GEAR',128,52,'#ffd23a',24,'c');tx('SUPER RACING 16-BIT',128,68,'#fff',9,'c');if(USER){tx('PILOTO: '+USER.id.toUpperCase()+(USER.country?' ['+USER.country+']':'')+' · VICTORIAS: '+(USER.wins||0)+' · COPAS: '+(USER.cups||0),128,82,'#7df',7,'c');btn('SALIR',256+OX-57,3,54,16,logout);if(ISP)btn('CONTROLES',256+OX-57-80,3,76,16,()=>{M.s='ctl';M.ci=0;M.cap=0;M.cmsg=''})}
   btn('1 JUGADOR',48,88,160,20,()=>{M.on=0;M.mi=0;M.pl=1;M.cup=0;M.s='c0'},M.mi==0);btn('2 JUGADORES',48,112,160,20,()=>{M.on=0;M.mi=1;M.pl=2;M.cup=0;M.s='c0'},M.mi==1);btn('🏆 COPA · TODOS LOS MAPAS',48,136,160,20,()=>{M.on=0;M.mi=2;M.s='kp'},M.mi==2);
   btn('🌐 MULTIJUGADOR ONLINE',48,160,160,20,()=>{M.mi=3;onlEnter()},M.mi==3);
-  tx('2 jugadores: pantalla dividida',128,192,'#aaa',6,'c');tx(kdef()?'J1: FLECHAS + ESPACIO (NITRO) · J2: W A S D + F':'TECLAS PERSONALIZADAS',128,201,'#8cf',6,'c');if(ISP)btn('⌨ CONTROLES (C)',88,205,80,14,()=>{M.s='ctl';M.ci=0;M.cap=0;M.cmsg=''})}
+  tx('2 jugadores: pantalla dividida',128,192,'#aaa',6,'c');tx(kdef()?'J1: FLECHAS + ESPACIO (NITRO) · J2: W A S D + F':'TECLAS PERSONALIZADAS · C: CONTROLES',128,201,'#8cf',6,'c')}
  else if(s=='kp'){tx('COPA',128,52,'#ffd23a',24,'c');tx(TR.length+' CIRCUITOS · SISTEMA DE PUNTOS',128,68,'#fff',8,'c');
   btn('1 JUGADOR',48,90,160,24,()=>{M.pl=1;M.cup=1;M.s='c0'},M.pl==1);btn('2 JUGADORES',48,122,160,24,()=>{M.pl=2;M.cup=1;M.s='c0'},M.pl==2);
   tx('Corre en todos los mapas y suma puntos.',128,168,'#aaa',7,'c');tx('Gana quien tenga más puntos al final.',128,178,'#aaa',7,'c');
