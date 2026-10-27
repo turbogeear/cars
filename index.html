@@ -3,7 +3,7 @@
 :root{--b:clamp(54px,18vh,84px)}
 html,body{margin:0;height:100%;background:#000;color:#ccc;font:13px monospace;text-align:center;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 body{display:flex;align-items:center;justify-content:center}
-canvas{display:block;image-rendering:auto;background:#000;cursor:default}
+canvas{display:block;image-rendering:pixelated;background:#000;cursor:default}
 #tc{display:none;position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));box-sizing:border-box;justify-content:space-between;align-items:flex-end;pointer-events:none;gap:8px}
 #tc>div{display:flex;pointer-events:auto}
 #tc button{font:bold calc(var(--b)*.2) monospace;color:#fff;border:2px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);box-shadow:0 3px 0 rgba(0,0,0,.45),inset 0 0 12px rgba(255,255,255,.12);touch-action:none;padding:0}
@@ -53,7 +53,7 @@ canvas{display:block;image-rendering:auto;background:#000;cursor:default}
 <div id="rot"><div>↻<br>GIRA TU DISPOSITIVO<br>Este juego solo funciona en horizontal</div></div>
 <script>
 const cv=document.getElementById('c'),X0=cv.getContext('2d'),D=.84,SL=200;let RW=900;
-let X=X0,W=256,H=224,RS=1,QL=1,FEMA=16.7;const K={},P={};let T=0,G,SEG,N,L,TK,mute=false;
+let X=X0,W=256,H=224;const K={},P={};let T=0,G,SEG,N,L,TK,mute=false;
 addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;K[e.code]=1;if(!e.repeat)P[e.code]=1;if(/Arrow|Space/.test(e.code))e.preventDefault();audio();if(e.code=='KeyM')toggleM()});
 addEventListener('keyup',e=>K[e.code]=0);
 const hit=(...a)=>a.map(k=>{const v=P[k];P[k]=0;return v}).some(Boolean);
@@ -277,7 +277,7 @@ function tx(s,x,y,col='#fff',sz=8,al='l'){X.font='bold '+sz+'px monospace';X.tex
 function q4(a,b,c,d,e,f,g,h,col){X.fillStyle=col;X.beginPath();X.moveTo(a,b);X.lineTo(c,d);X.lineTo(e,f);X.lineTo(g,h);X.fill()}
 const shd=(h,f)=>{const n=parseInt(h.slice(1),16),t=f<0?0:255,p=Math.abs(f),m=v=>Math.round(v+(t-v)*p);return'rgb('+m(n>>16)+','+m(n>>8&255)+','+m(n&255)+')'};
 // ---------- COCHE 3D: modelo poligonal que gira 360° sin deformarse ----------
-const YS=5,YN=72,SS=matchMedia('(pointer:coarse)').matches?2:3,SW=100,SH=60,AX=50,AY=48,MXY=15,PC=Math.cos(.2),PS=Math.sin(.2),PW=SW*SS,PH=SH*SS,
+const YS=5,YN=72,SS=2,SW=100,SH=60,AX=50,AY=48,MXY=15,PC=Math.cos(.2),PS=Math.sin(.2),PW=SW*SS,PH=SH*SS,
  IM=new ImageData(PW,PH),PX=new Uint32Array(IM.data.buffer),ZB=new Float32Array(PW*PH),ID=new Uint8Array(PW*PH),MD={},SPR={};
 const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),
  pk32=(h,s)=>{const q=rgb(h).map(v=>Math.max(0,Math.min(255,Math.round(s<=1?v*s:v+(255-v)*(s-1)))));return(255<<24|q[2]<<16|q[1]<<8|q[0])>>>0};
@@ -354,14 +354,13 @@ function spr(d,br,ai){const key=CARS.indexOf(d)*200+br*100+ai;if(SPR[key])return
  for(let r=0;r<2;r++){const cp=PX.slice();for(let y=1;y<PH-1;y++)for(let x=1;x<PW-1;x++){const i=y*PW+x;if(!cp[i]&&(cp[i-1]||cp[i+1]||cp[i-PW]||cp[i+PW]))PX[i]=0xff0a0606}}
  const cv=document.createElement('canvas');cv.width=PW;cv.height=PH;cv.getContext('2d').putImageData(IM,0,0);return SPR[key]=cv}
 // c.ya = ángulo fijo en grados (showroom 360°); si no, el ángulo sale del volante y la velocidad
-const SHP=Array.from({length:28},(_,i)=>{const a=i/28*6.2832,c=Math.cos(a),s=Math.sin(a);return[25*Math.sign(c)*Math.abs(c)**.4,46*Math.sign(s)*Math.abs(s)**.4]});
 function carS(cx,b,k,c,tn){
  const sp=Math.min(1,.25+(c.sp||0)/(c.max||1)*2),dg=c.ya!=null?c.ya:Math.max(-1,Math.min(1,(c.sl||0)*sp))*MXY,
   ai=((Math.round(dg/YS)%YN)+YN)%YN,th=ai*YS*Math.PI/180,cs=Math.cos(th),sn=Math.sin(th),by=b-5*k,
   pj=(x,y,z)=>{const Z=-x*sn+z*cs;return[cx+(x*cs+z*sn)*k,by-(y*PC+Z*PS)*k]},
   fl=()=>{if(!(c.nt>0))return;for(const s of[-1,1]){const A=pj(s*7.9,10,-43.6),f=16+Math.random()*12;circ(A[0],A[1],4*k,'rgba(255,170,60,.3)');
    [['#d83a08',1,3.2],['#ffa020',.75,2.4],['#ffd24a',.5,1.6],['#fff6c0',.3,.8]].forEach(([col,l,w])=>{const B=pj(s*7.9,10,-43.6-f*l),dx=B[0]-A[0],dy=B[1]-A[1],n=Math.hypot(dx,dy)||1,px=-dy/n*w*k,py=dx/n*w*k;poly(col,A[0]+px,A[1]+py,A[0]-px,A[1]-py,B[0],B[1])})}};
- c.th=th;c.tc=dg*Math.PI/180;X.fillStyle='rgba(0,0,0,.3)';X.beginPath();SHP.forEach(([x,z],i)=>{const q=pj(x,0,z);i?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1])});X.fill();
+ c.th=th;c.tc=dg*Math.PI/180;X.fillStyle='rgba(0,0,0,.3)';X.beginPath();[[-25,-46],[25,-46],[25,44],[-25,44]].forEach(([x,z],i)=>{const q=pj(x,0,z);i?X.lineTo(q[0],q[1]):X.moveTo(q[0],q[1])});X.fill();
  const lg=()=>{const fa=Math.abs(cs),al=DN*fa,br=c.br?1:0;if(fa<.1)return;X.save();X.globalCompositeOperation='lighter';
   const gl=(p,r,c1)=>{const g=X.createRadialGradient(p[0],p[1],0,p[0],p[1],r);g.addColorStop(0,c1);g.addColorStop(1,c1.replace(/[\d.]+\)$/,'0)'));X.fillStyle=g;X.fillRect(p[0]-r,p[1]-r,r*2,r*2)};
   if(cs<0)for(const s of[-1,1]){const p=pj(s*9.2,NZ[CARS.indexOf(c.def)]+.6,34.8);gl(p,13*k,'rgba(255,246,190,'+.9*al+')');gl(p,3.6*k,'rgba(255,255,255,'+al+')')}
@@ -670,11 +669,11 @@ function view(c,x0,y0,vw,h){LG=[];WN=[];
   const q={s,X1:vw/2+s1*(x-c.x*RW)*fw,Y1:hy-s1*(s.y1-cy)*ky,W1:s1*RW*fw,X2:vw/2+s2*(x+dx-c.x*RW)*fw,Y2:hy-s2*(s.y2-cy)*ky,W2:s2*RW*fw,cl:my};
   R.push(q);x+=dx;dx+=s.cv;
   if(q.Y2>=q.Y1||q.Y2>=my)continue;my=q.Y1;
-  const k=(s.i/3|0)&1,r1=q.W1/7,r2=q.W2/7,YB=q.Y1+1.8;
+  const k=(s.i/3|0)&1,r1=q.W1/7,r2=q.W2/7;
   X.fillStyle=TK.grass[k];X.fillRect(0,q.Y2,vw,q.Y1-q.Y2+1);
-  q4(q.X1-q.W1-r1,YB,q.X1-q.W1,YB,q.X2-q.W2,q.Y2,q.X2-q.W2-r2,q.Y2,TK.rum[k]);
-  q4(q.X1+q.W1+r1,YB,q.X1+q.W1,YB,q.X2+q.W2,q.Y2,q.X2+q.W2+r2,q.Y2,TK.rum[k]);
-  q4(q.X1-q.W1,YB,q.X1+q.W1,YB,q.X2+q.W2,q.Y2,q.X2-q.W2,q.Y2,s.i<3?(s.i&1?'#222':'#eee'):TK.road[k]);
+  q4(q.X1-q.W1-r1,q.Y1,q.X1-q.W1,q.Y1,q.X2-q.W2,q.Y2,q.X2-q.W2-r2,q.Y2,TK.rum[k]);
+  q4(q.X1+q.W1+r1,q.Y1,q.X1+q.W1,q.Y1,q.X2+q.W2,q.Y2,q.X2+q.W2+r2,q.Y2,TK.rum[k]);
+  q4(q.X1-q.W1,q.Y1,q.X1+q.W1,q.Y1,q.X2+q.W2,q.Y2,q.X2-q.W2,q.Y2,s.i<3?(s.i&1?'#222':'#eee'):TK.road[k]);
   if(s.i>2&&(s.i*2654435761>>>0)%7<2)q4(q.X1-q.W1,q.Y1,q.X1+q.W1,q.Y1,q.X2+q.W2,q.Y2,q.X2-q.W2,q.Y2,'rgba(0,0,0,.07)');for(const g of[-1,1])q4(q.X1+g*q.W1*.9,q.Y1,q.X1+g*q.W1*.95,q.Y1,q.X2+g*q.W2*.95,q.Y2,q.X2+g*q.W2*.9,q.Y2,'rgba(255,255,255,.8)');
   if(s.pit||SEG[(s.i+N-1)%N].pit)pitLane(q,s,k);if(k)for(let l=1;l<3;l++){const a=q.X1-q.W1+q.W1*2/3*l,e=q.X2-q.W2+q.W2*2/3*l,w1=q.W1/60,w2=q.W2/60;q4(a-w1,q.Y1,a+w1,q.Y1,e+w2,q.Y2,e-w2,q.Y2,'#fff')}}
  {const fg=X.createLinearGradient(0,hy,0,hy+h*.24);fg.addColorStop(0,ha(TK.sky[1],.9));fg.addColorStop(1,ha(TK.sky[1],0));X.fillStyle=fg;X.fillRect(0,hy-1,vw,h*.24+1)}
@@ -762,7 +761,7 @@ function ui(){if(M.s=='tr'){X.globalCompositeOperation='saturation';X.fillStyle=
   tx('DIFICULTAD DE LOS RIVALES',128,175,'#7df',7,'c');DFN.forEach((n,i)=>btn(n,18+i*75,178,70,14,()=>setDf(i),M.df==i));tx(DFD[M.df],128,199,'#ffd23a',6,'c');
   btn('ATRÁS',20,202,70,16,()=>{M.s=M.pl==2?'c1':'c0'});btn('¡CORRER!',106,202,130,16,startRace,1)}
  tx('También: ENTER / ESC / flechas',128,221,'#888',6,'c');X.restore()}
-function render(){X0.setTransform(RS,0,0,RS,0,0);X0.imageSmoothingEnabled=true;X0.imageSmoothingQuality='high';BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
+function render(){BT=[];DN=dayn();OX=(W-256)/2;OY=(H-224)/2;
  if(G.st=='menu'){view(G.cars[0],0,0,W,H);ui();onlHud();tx('v10',W-4,H-4,'#556',6,'r');if(window._kick&&performance.now()<window._kick.u)tx(window._kick.m,W/2,26,'#ff7a7a',8,'c')}
  else{const hs=G.cars.filter(c=>c.hu!=null);
   if(hs.length==1)carView(hs[0],0,0,W,H);else{const w2=W>>1;carView(hs[0],0,0,w2-1,H);carView(hs[1],w2+1,0,W-w2-1,H);X.fillStyle='#000';X.fillRect(w2-1,0,2,H)}
@@ -963,8 +962,8 @@ document.querySelectorAll('#tc [data-k]').forEach(b=>{const k=b.dataset.k,up=()=
  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();K[k]=1;P[k]=1;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
  ['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,up))});
 let last=performance.now(),acc=0;
-let qn=0;function loop(t){const fd=t-last;if(fd>0&&fd<250){FEMA+=(fd-FEMA)*.1;if(++qn>45&&FEMA>24&&QL>.5){QL=Math.max(.5,QL*.8);qn=0;FEMA=16.7;fit()}}acc+=Math.min(ON&&ON.live?.1:.05,fd/1000);last=t;while(acc>=1/60){if(innerWidth>=innerHeight)step(1/60);acc-=1/60}render();requestAnimationFrame(loop)}
-function fit(){const iw=innerWidth,ih=innerHeight;W=Math.max(256,Math.min(600,Math.round(224*iw/ih)));H=224;const k=Math.min(iw/W,ih/H),dpr=Math.min(2,window.devicePixelRatio||1),cap=matchMedia('(pointer:coarse)').matches?2:4;RS=Math.max(1,Math.min(cap,Math.ceil(k*dpr-.01))*QL);const cw=Math.round(W*RS),ch=Math.round(H*RS);if(cv.width!=cw)cv.width=cw;if(cv.height!=ch)cv.height=ch;cv.style.width=Math.floor(W*k)+'px';cv.style.height=Math.floor(H*k)+'px';layBtns()}
+function loop(t){acc+=Math.min(.1,(t-last)/1000);last=t;while(acc>=1/60){if(innerWidth>=innerHeight)step(1/60);acc-=1/60}render();requestAnimationFrame(loop)}
+function fit(){const iw=innerWidth,ih=innerHeight;W=Math.max(256,Math.min(600,Math.round(224*iw/ih)));H=224;if(cv.width!=W)cv.width=W;if(cv.height!=H)cv.height=H;const k=Math.min(iw/W,ih/H);cv.style.width=Math.floor(W*k)+'px';cv.style.height=Math.floor(H*k)+'px';layBtns()}
 // Coloca los botones superiores sin tapar el HUD (POS/COMBUSTIBLE a la izquierda, VUELTA/KM/H a la derecha)
 function layBtns(){try{const r=cv.getBoundingClientRect(),k=r.height/224,bl=r.left,br=innerWidth-r.right,
  Ls=document.querySelector('#tc .mid:not(.mid2)'),Rs=document.querySelector('#tc .mid2');if(!Ls||!Rs)return;
