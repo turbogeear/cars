@@ -53,7 +53,7 @@ canvas{display:block;image-rendering:auto;background:#000;cursor:default}
 <div id="rot"><div>↻<br>GIRA TU DISPOSITIVO<br>Este juego solo funciona en horizontal</div></div>
 <script>
 const cv=document.getElementById('c'),X0=cv.getContext('2d'),D=.84,SL=200;let RW=900;
-let X=X0,W=256,H=224,RS=1;const K={},P={};let T=0,G,SEG,N,L,TK,mute=false;
+let X=X0,W=256,H=224,RS=1,QL=1,FEMA=16.7;const K={},P={};let T=0,G,SEG,N,L,TK,mute=false;
 addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;K[e.code]=1;if(!e.repeat)P[e.code]=1;if(/Arrow|Space/.test(e.code))e.preventDefault();audio();if(e.code=='KeyM')toggleM()});
 addEventListener('keyup',e=>K[e.code]=0);
 const hit=(...a)=>a.map(k=>{const v=P[k];P[k]=0;return v}).some(Boolean);
@@ -277,7 +277,7 @@ function tx(s,x,y,col='#fff',sz=8,al='l'){X.font='bold '+sz+'px monospace';X.tex
 function q4(a,b,c,d,e,f,g,h,col){X.fillStyle=col;X.beginPath();X.moveTo(a,b);X.lineTo(c,d);X.lineTo(e,f);X.lineTo(g,h);X.fill()}
 const shd=(h,f)=>{const n=parseInt(h.slice(1),16),t=f<0?0:255,p=Math.abs(f),m=v=>Math.round(v+(t-v)*p);return'rgb('+m(n>>16)+','+m(n>>8&255)+','+m(n&255)+')'};
 // ---------- COCHE 3D: modelo poligonal que gira 360° sin deformarse ----------
-const YS=5,YN=72,SS=3,SW=100,SH=60,AX=50,AY=48,MXY=15,PC=Math.cos(.2),PS=Math.sin(.2),PW=SW*SS,PH=SH*SS,
+const YS=5,YN=72,SS=matchMedia('(pointer:coarse)').matches?2:3,SW=100,SH=60,AX=50,AY=48,MXY=15,PC=Math.cos(.2),PS=Math.sin(.2),PW=SW*SS,PH=SH*SS,
  IM=new ImageData(PW,PH),PX=new Uint32Array(IM.data.buffer),ZB=new Float32Array(PW*PH),ID=new Uint8Array(PW*PH),MD={},SPR={};
 const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),
  pk32=(h,s)=>{const q=rgb(h).map(v=>Math.max(0,Math.min(255,Math.round(s<=1?v*s:v+(255-v)*(s-1)))));return(255<<24|q[2]<<16|q[1]<<8|q[0])>>>0};
@@ -953,8 +953,8 @@ document.querySelectorAll('#tc [data-k]').forEach(b=>{const k=b.dataset.k,up=()=
  b.addEventListener('pointerdown',e=>{e.preventDefault();audio();K[k]=1;P[k]=1;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(_){}});
  ['pointerup','pointercancel','lostpointercapture'].forEach(n=>b.addEventListener(n,up))});
 let last=performance.now(),acc=0;
-function loop(t){acc+=Math.min(.1,(t-last)/1000);last=t;while(acc>=1/60){if(innerWidth>=innerHeight)step(1/60);acc-=1/60}render();requestAnimationFrame(loop)}
-function fit(){const iw=innerWidth,ih=innerHeight;W=Math.max(256,Math.min(600,Math.round(224*iw/ih)));H=224;const k=Math.min(iw/W,ih/H),dpr=Math.min(2,window.devicePixelRatio||1),cap=matchMedia('(pointer:coarse)').matches?3:4;RS=Math.max(1,Math.min(cap,Math.ceil(k*dpr-.01)));if(cv.width!=W*RS)cv.width=W*RS;if(cv.height!=H*RS)cv.height=H*RS;cv.style.width=Math.floor(W*k)+'px';cv.style.height=Math.floor(H*k)+'px';layBtns()}
+let qn=0;function loop(t){const fd=t-last;if(fd>0&&fd<250){FEMA+=(fd-FEMA)*.1;if(++qn>45&&FEMA>24&&QL>.5){QL=Math.max(.5,QL*.8);qn=0;FEMA=16.7;fit()}}acc+=Math.min(.05,fd/1000);last=t;while(acc>=1/60){if(innerWidth>=innerHeight)step(1/60);acc-=1/60}render();requestAnimationFrame(loop)}
+function fit(){const iw=innerWidth,ih=innerHeight;W=Math.max(256,Math.min(600,Math.round(224*iw/ih)));H=224;const k=Math.min(iw/W,ih/H),dpr=Math.min(2,window.devicePixelRatio||1),cap=matchMedia('(pointer:coarse)').matches?2:4;RS=Math.max(1,Math.min(cap,Math.ceil(k*dpr-.01))*QL);const cw=Math.round(W*RS),ch=Math.round(H*RS);if(cv.width!=cw)cv.width=cw;if(cv.height!=ch)cv.height=ch;cv.style.width=Math.floor(W*k)+'px';cv.style.height=Math.floor(H*k)+'px';layBtns()}
 // Coloca los botones superiores sin tapar el HUD (POS/COMBUSTIBLE a la izquierda, VUELTA/KM/H a la derecha)
 function layBtns(){try{const r=cv.getBoundingClientRect(),k=r.height/224,bl=r.left,br=innerWidth-r.right,
  Ls=document.querySelector('#tc .mid:not(.mid2)'),Rs=document.querySelector('#tc .mid2');if(!Ls||!Rs)return;
